@@ -1,0 +1,29 @@
+{
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.10.0",
+    "mongoose": "^8.8.2"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "elearning platform called Enfover",
+  "main": "server.js",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/softwaredevs-1/enfover-alpha.git"
+  },
+  "author": "Akrem Beshir.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/softwaredevs-1/enfover-alpha/issues"
+  },
+  "homepage": "https://github.com/softwaredevs-1/enfover-alpha#readme"
+}
