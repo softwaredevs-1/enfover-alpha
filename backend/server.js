@@ -1,45 +1,36 @@
-// server.js
-
 import express from "express";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import connectToMongoDB from "./config/db/connectToMongoDB.js";
 
-
-// Import routes
+// API Routes
 import userRoutes from "./routes/user.routes.js";
 import newsRoutes from "./routes/news.routes.js";
 import courseRoutes from "./routes/course.routes.js";
 import competitionRoutes from "./routes/competition.routes.js";
 
+
+
 // Load environment variables
 dotenv.config();
 
-// Initialize Express
 const app = express();
 
 // Middleware
 app.use(cors()); // Enable CORS for cross-origin requests
 app.use(express.json()); // Parse JSON requests
+app.use(cookieParser()); // Parse cookies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded requests
 app.use(morgan("dev")); // Log HTTP requests
 
-// Database Connection
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-    console.log("Connected to MongoDB");
-  } catch (error) {
-    console.error("Error connecting to MongoDB:", error.message);
-    process.exit(1);
-  }
-};
-connectDB();
+// Connect to MongoDB
+connectToMongoDB();
 
-// API Routes
+
 app.use("/api/users", userRoutes); // User routes for authentication and profile
 app.use("/api/news", newsRoutes); // News section routes
 app.use("/api/courses", courseRoutes); // Courses section routes
@@ -64,4 +55,6 @@ app.use((err, req, res, next) => {
 
 // Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

@@ -1,13 +1,6 @@
 import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-
-// Generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: "30d", // Token valid for 30 days
-  });
-};
+import generateTokenAndSetCookies from "../utils/generateToken.js";
 
 // @desc    Register a new user
 // @route   POST /api/users/register
@@ -23,8 +16,7 @@ export const registerUser = async (req, res) => {
     }
 
     // Hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create the user
     const user = await User.create({
@@ -35,18 +27,17 @@ export const registerUser = async (req, res) => {
       grade: role === "Student" ? grade : undefined, // Only assign grade for students
     });
 
-    if (user) {
-      res.status(201).json({
-        _id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        grade: user.grade,
-        token: generateToken(user.id),
-      });
-    } else {
-      res.status(400).json({ message: "Invalid user data" });
-    }
+    // Generate token and set it in cookies
+    const token = generateTokenAndSetCookies(user.id, res);
+
+    res.status(201).json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      grade: user.grade,
+      token,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -55,7 +46,6 @@ export const registerUser = async (req, res) => {
 // @desc    Authenticate a user and get token
 // @route   POST /api/users/login
 // @access  Public
-
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -72,17 +62,37 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Return user data with token
-    res.json({
+    // Generate token and set it in cookies
+    const token = generateTokenAndSetCookies(user.id, res);
+
+    res.status(200).json({
       _id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
       grade: user.grade,
-      token: generateToken(user.id),
+      token,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+
+// @desc    Logout a user
+// @route   POST /api/users/logout
+// @access  Public
+export const logoutUser = async (req, res) => {
+  try {
+    // Clear the token cookie
+    res.cookie("token", "", {
+      httpOnly: true,
+      expires: new Date(0), // Set expiration to the past
+    });
+
+    res.status(200).json({ message: "User logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ message: `Error logging out: ${error.message}` });
   }
 };
 
@@ -96,7 +106,7 @@ export const getUserProfile = async (req, res) => {
     const user = await User.findById(req.user.id).select("-password"); // Exclude password
 
     if (user) {
-      res.json({
+      res.status(200).json({
         _id: user.id,
         name: user.name,
         email: user.email,

@@ -5,8 +5,17 @@ const userSchema = mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, default: "Student", enum: ["Student", "Teacher", "Admin", "Super Admin"] },
-    grade: { type: String, required: function () { return this.role === "Student"; } }, // Only for students
+    role: {
+      type: String,
+      enum: ["Student", "Teacher", "Admin", "Super Admin"],
+      default: "Student",
+    },
+    grade: {
+      type: String,
+      required: function () {
+        return this.role === "Student";
+      },
+    },
   },
   {
     timestamps: true,
