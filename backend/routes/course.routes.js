@@ -1,3 +1,5 @@
+
+
 import express from "express";
 import { getCoursesByGrade, addCourseContent, getCourseContent } from "../controllers/course.controller.js";
 import { teacherOnly, protect } from "../middleware/authMiddleware.js";

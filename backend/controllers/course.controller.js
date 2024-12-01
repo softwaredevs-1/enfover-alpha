@@ -45,3 +45,30 @@ export const getCourseContent = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+
+
+// Example: 
+// {
+//     "grade": "kg",
+//     "title": "Alphabets",
+//     "description": "The ultimate start of an education",
+//     "content": [
+//       {
+//         "type": "Video",
+//         "url": "https://example.com/hpe-video.mp4",
+//         "title": "Introduction to HPE"
+//       },
+//       {
+//         "type": "Material",
+//         "url": "https://example.com/hpe-material.pdf",
+//         "title": "HPE Reading Material"
+//       },
+//       {
+//         "type": "Quiz",
+//         "url": "https://example.com/hpe-quiz-link",
+//         "title": "HPE Quiz 1"
+//       }
+//     ]
+//   }

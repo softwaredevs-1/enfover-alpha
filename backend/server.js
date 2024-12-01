@@ -12,6 +12,10 @@ import userRoutes from "./routes/user.routes.js";
 import newsRoutes from "./routes/news.routes.js";
 import courseRoutes from "./routes/course.routes.js";
 import competitionRoutes from "./routes/competition.routes.js";
+import adsRoutes from "./routes/ads.routes.js"
+import paymentRoutes from "./routes/payment.routes.js";
+
+
 
 
 
@@ -35,6 +39,9 @@ app.use("/api/users", userRoutes); // User routes for authentication and profile
 app.use("/api/news", newsRoutes); // News section routes
 app.use("/api/courses", courseRoutes); // Courses section routes
 app.use("/api/competitions", competitionRoutes); // Competition routes
+app.use("/api/ads", adsRoutes); // Ads routes
+app.use("/api/payments", paymentRoutes); //payment routes
+
 
 // Static Files (For production builds)
 const __filename = fileURLToPath(import.meta.url);
