@@ -6,7 +6,7 @@ import generateTokenAndSetCookies from "../utils/generateToken.js";
 // @route   POST /api/users/register
 // @access  Public
 export const registerUser = async (req, res) => {
-  const { name, email, password, role, grade } = req.body;
+  const { name, email, password,gender, role, grade } = req.body;
 
   try {
     // Check if user already exists
@@ -23,6 +23,7 @@ export const registerUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      gender,
       role: role || "Student", // Default role is Student
       grade: role === "Student" ? grade : undefined, // Only assign grade for students
     });
@@ -34,6 +35,7 @@ export const registerUser = async (req, res) => {
       _id: user.id,
       name: user.name,
       email: user.email,
+      gender: user.gender,
       role: user.role,
       grade: user.grade,
       token,
@@ -112,12 +114,66 @@ export const getUserProfile = async (req, res) => {
         _id: user.id,
         name: user.name,
         email: user.email,
+        gender: user.gender,
         role: user.role,
         grade: user.grade,
       });
     } else {
       res.status(404).json({ message: "User not found" });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+// Update user profile
+export const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    user.gender = req.body.gender || user.gender;
+    user.password = req.body.password || user.password;
+
+    if (req.body.password) {
+      user.password = await bcrypt.hash(req.body.password, 10);
+    }
+
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      _id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      gender: updatedUser.gender,
+      role: updatedUser.role,
+      grade: updatedUser.grade,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
+// Get a list of all registered users (Admin only)
+export const getAllUsers = async (req, res) => {
+  try {
+    // Check if the requester is an admin
+    if (req.user.role !== "Admin" && req.user.role !== "SuperAdmin") {
+      return res.status(403).json({ message: "Access denied. Admins only." });
+    }
+
+    // Fetch all users excluding their passwords
+    const users = await User.find().select("-password");
+
+    res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

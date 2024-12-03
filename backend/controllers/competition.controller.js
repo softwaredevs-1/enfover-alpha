@@ -109,7 +109,6 @@ export const submitAnswers = async (req, res) => {
 };
 
 
-
 // Update an existing competition (Admin only)
 export const updateCompetition = async (req, res) => {
   const { id } = req.params; // Competition ID
@@ -139,7 +138,6 @@ export const updateCompetition = async (req, res) => {
 };
 
 // Delete a competition (Admin only)
-
 export const deleteCompetition = async (req, res) => {
   try {
     const { id } = req.params;
