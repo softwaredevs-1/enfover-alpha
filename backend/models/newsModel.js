@@ -7,11 +7,12 @@ const newsSchema = mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true, // Reference to the Admin who created the news article
+      required: true,
     },
+    status: { type: String, enum: ["active", "deleted"], default: "active" }, // Active or soft deleted
   },
   {
-    timestamps: true,
+    timestamps: true, // Automatically includes createdAt and updatedAt
   }
 );
 

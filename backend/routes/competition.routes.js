@@ -5,10 +5,10 @@ import {
   createCompetition,
   deleteCompetition,
   submitAnswers,
-  updateCompetition,
-  getAdminAnalytics
+  updateCompetition
 } from "../controllers/competition.controller.js";
 import { adminOnly, protect } from "../middleware/authMiddleware.js";
+import { getAdminAnalytics } from "../controllers/getAdminAnalytics.controller.js";
 
 const router = express.Router();
 

@@ -13,7 +13,6 @@ export const getCompetitionsAdmin = async (req, res) => {
   }
 };
 
-
 // Get all competitions for Students
 export const getCompetitions = async (req, res) => {
   try {
@@ -29,8 +28,6 @@ export const getCompetitions = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-
 
 // Create a new competition (Admin only)
 export const createCompetition = async (req, res) => {
@@ -58,7 +55,6 @@ export const createCompetition = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 //Students Submitting answers
 export const submitAnswers = async (req, res) => {
@@ -125,7 +121,6 @@ export const submitAnswers = async (req, res) => {
   }
 };
 
-
 // Update an existing competition (Admin only)
 export const updateCompetition = async (req, res) => {
   const { id } = req.params; // Competition ID
@@ -174,7 +169,6 @@ export const deleteCompetition = async (req, res) => {
     res.status(500).json({ message: `Error deleting competition: ${error.message}` });
   }
 };
-
 
 export const getAdminAnalytics = async (req, res) => {
   try {
