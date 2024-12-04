@@ -1,4 +1,6 @@
 import Competition from "../models/competitionModel.js";
+import AdminAnalytics from "../models/adminAnalyticsModel.js";
+
 
 // Get all competition Results for Admins
 export const getCompetitionsAdmin = async (req, res) => {
@@ -15,29 +17,19 @@ export const getCompetitionsAdmin = async (req, res) => {
 // Get all competitions for Students
 export const getCompetitions = async (req, res) => {
   try {
-    const competitions = await Competition.find();
+    const now = new Date(); // Current date and time
 
-    // Format the response for students
-    const studentView = competitions.map((competition) => ({
-      _id: competition._id,
-      title: competition.title,
-      description: competition.description,
-      deadline: competition.deadline,
-      prizes: competition.prizes,
-      questions: competition.questions.map((question) => ({
-        _id: question._id,
-        questionText: question.questionText,
-        options: question.options.map((option) => ({
-          text: option.text, // Exclude `isCorrect`
-        })),
-      })),
-    }));
-
-    res.status(200).json(studentView);
+    // Fetch competitions where the deadline is still in the future and status is active
+    const competitions = await Competition.find({
+      deadline: { $gte: now },
+      status: "active",
+    });
+    res.status(200).json(competitions);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 
 // Create a new competition (Admin only)
@@ -53,6 +45,13 @@ export const createCompetition = async (req, res) => {
       questions, // Add questions to the competition
       createdBy: req.user.id,
     });
+
+    // Increment totalCompetitions in AdminAnalytics
+    await AdminAnalytics.findOneAndUpdate(
+      {},
+      { $inc: { totalCompetitions: 1 } },
+      { upsert: true } // Create if it doesn't exist
+    );
 
     res.status(201).json(competition);
   } catch (error) {
@@ -77,6 +76,15 @@ export const submitAnswers = async (req, res) => {
       return res.status(400).json({ message: "Competition has already ended" });
     }
 
+       // Check if the user has already submitted answers
+       const alreadyParticipated = competition.participants.some(
+        (participant) => participant.user.toString() === req.user.id
+      );
+  
+      if (alreadyParticipated) {
+        return res.status(400).json({ message: "You have already submitted answers for this competition." });
+      }
+
     // Calculate the score
     let score = 0;
 
@@ -99,8 +107,17 @@ export const submitAnswers = async (req, res) => {
       score,            // Calculated score
     });
 
-    // Save the updated competition
+    
+    // Increment participant count and save updated count
+    competition.numberOfParticipants += 1;
     await competition.save();
+
+    // Increment totalParticipants in AdminAnalytics
+    await AdminAnalytics.findOneAndUpdate(
+      {},
+      { $inc: { totalParticipants: 1 } },
+      { upsert: true }
+    );
 
     res.status(200).json({ message: "Answers submitted successfully", score });
   } catch (error) {
@@ -148,14 +165,31 @@ export const deleteCompetition = async (req, res) => {
       return res.status(404).json({ message: "Competition not found" });
     }
 
-    // Use deleteOne to remove the competition
-    await competition.deleteOne();
+    // Perform a soft delete by updating the status
+    competition.status = "deleted";
+    await competition.save();
 
-    res.status(200).json({ message: "Competition removed successfully" });
+    res.status(200).json({ message: "Competition marked as deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: `Error deleting competition: ${error.message}` });
   }
 };
+
+
+export const getAdminAnalytics = async (req, res) => {
+  try {
+    const analytics = await AdminAnalytics.findOne({});
+
+    if (!analytics) {
+      return res.status(200).json({ totalCompetitions: 0, totalParticipants: 0 });
+    }
+
+    res.status(200).json(analytics);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 
 

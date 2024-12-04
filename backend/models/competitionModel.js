@@ -37,17 +37,47 @@ const competitionSchema = mongoose.Schema(
     title: { type: String, required: true },
     description: { type: String, required: true },
     deadline: { type: Date, required: true },
-    prizes: { type: String }, // E.g., "First place: $200"
+    prizes: { type: String },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true, // Admin who created the competition
+      required: true,
     },
-    questions: [questionSchema], // Array of questions
-    participants: [participantSchema], // Participants and their answers
+    participants: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        answers: [
+          {
+            questionId: mongoose.Schema.Types.ObjectId,
+            selectedOption: String,
+          },
+        ],
+        score: Number,
+      },
+    ],
+    questions: [
+      {
+        questionText: String,
+        options: [
+          {
+            text: String,
+            isCorrect: Boolean,
+          },
+        ],
+      },
+    ],
+    status: {
+      type: String,
+      enum: ["active", "deleted"],
+      default: "active",
+    },
+    numberOfParticipants: { type: Number, default: 0 }, // New field
   },
   { timestamps: true }
 );
+
+
+
 
 const Competition = mongoose.model("Competition", competitionSchema);
 

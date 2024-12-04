@@ -57,21 +57,52 @@ export const updateCourse = async (req, res) => {
 };
 
 
+//soft delete a course 
+export const softDeleteCourse = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const course = await Course.findById(id);
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Only allow the course creator or admin to delete
+    if (req.user.role !== "Admin" && req.user.id !== course.createdBy.toString()) {
+      return res.status(403).json({ message: "Access denied. You can only delete your own courses." });
+    }
+
+    // Soft delete by changing the status
+    course.status = "deleted";
+    await course.save();
+
+    res.status(200).json({ message: "Course removed successfully (soft delete)." });
+  } catch (error) {
+    res.status(500).json({ message: `Error removing course: ${error.message}` });
+  }
+};
+
+
+
 
 
 // Get a list of all registered users (Admin only)
 export const getAllCourses = async (req, res) => {
   try {
-    // Check if the requester is an admin
-    if (req.user.role !== "Admin" && req.user.role !== "SuperAdmin") {
+    console.log("User info:", req.user); // Debug log
+
+    // Validate admin or super admin role
+    if (!["Admin", "SuperAdmin"].includes(req.user.role)) {
       return res.status(403).json({ message: "Access denied. Admins only." });
     }
 
-    // Fetch all Courses excluding their passwords
+    // Fetch all courses
     const courses = await Course.find();
 
     res.status(200).json(courses);
   } catch (error) {
+    console.error("Error fetching courses:", error.message); // Debug log
     res.status(500).json({ message: error.message });
   }
 };
@@ -79,12 +110,15 @@ export const getAllCourses = async (req, res) => {
 
 
 
+
 // Get courses by grade
 export const getCoursesByGrade = async (req, res) => {
   const { grade } = req.params;
+  console.log("Requested grade:", grade); // Log grade for debugging
 
   try {
-    const courses = await Course.find({ grade });
+    const courses = await Course.find({ grade, status: "active" });
+    console.log("Found courses:", courses); // Log found courses
     res.json(courses);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -93,19 +127,20 @@ export const getCoursesByGrade = async (req, res) => {
 
 
 
-
 // Get specific course content by ID
 export const getCourseContent = async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    // Find the course by ID and ensure it's active
+    const course = await Course.findOne({ _id: req.params.id, status: "active" });
 
     if (course) {
-      res.json(course);
+      res.status(200).json(course); // Return the course details
     } else {
-      res.status(404).json({ message: "Course not found" });
+      res.status(404).json({ message: "Course not found or inactive" }); // Updated message for better clarity
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error fetching course content:", error.message); // Debug log
+    res.status(500).json({ message: "Server error. Please try again later." });
   }
 };
 
