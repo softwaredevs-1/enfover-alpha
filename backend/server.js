@@ -7,6 +7,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import connectToMongoDB from "./config/db/connectToMongoDB.js";
 
+
 // API Routes
 import userRoutes from "./routes/user.routes.js";
 import newsRoutes from "./routes/news.routes.js";
@@ -14,9 +15,6 @@ import courseRoutes from "./routes/course.routes.js";
 import competitionRoutes from "./routes/competition.routes.js";
 import adsRoutes from "./routes/ads.routes.js"
 import paymentRoutes from "./routes/payment.routes.js";
-
-
-
 
 
 // Load environment variables
@@ -43,22 +41,34 @@ app.use("/api/ads", adsRoutes); // Ads routes
 app.use("/api/payments", paymentRoutes); //payment routes
 
 
-// Static Files (For production builds)
+
+// Define __dirname manually
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/build")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "../frontend", "build", "index.html"));
-  });
-}
+// Serve static files from the uploads directory
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+
+// Static Files (For production builds)
+
+
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// if (process.env.NODE_ENV === "production") {
+//   app.use(express.static(path.join(__dirname, "../frontend/build")));
+//   app.get("*", (req, res) => {
+//     res.sendFile(path.resolve(__dirname, "../frontend", "build", "index.html"));
+//   });
+// }
+
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({ message: err.message || "Server Error" });
 });
+
 
 // Start the server
 const PORT = process.env.PORT || 5000;

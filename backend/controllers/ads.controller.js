@@ -5,25 +5,32 @@ import AdminAnalytics from "../models/adminAnalyticsModel.js";
 // @route   POST /api/ads
 // @access  Admin
 export const createAd = async (req, res) => {
-  const { title, contentType, startDate, endDate } = req.body;
+  const { title, contentType, startDate, endDate, url } = req.body;
 
   try {
-    // Handle file upload
+    // Check for file upload
     let fileUrl = null;
     if (req.file) {
-      fileUrl = `/uploads/ads/${req.file.filename}`; // Path to uploaded file
+      fileUrl = `/uploads/ads/${req.file.filename}`;
     }
 
-    // Create the ad
+    // Validate content
+    if (!contentType || (!fileUrl && !url)) {
+      return res
+        .status(400)
+        .json({ message: "Content type and either a file or URL are required." });
+    }
+
+    // Create ad in the database
     const ad = await Ad.create({
       title,
       content: {
-        type: contentType, // "Image", "Video", or "Text"
-        url: fileUrl || req.body.url, // Use uploaded file or provided URL
+        type: contentType,
+        url: fileUrl || url,
       },
       startDate,
       endDate,
-      createdBy: req.user.id, // Admin creating the ad
+      createdBy: req.user.id,
     });
 
     res.status(201).json(ad);
@@ -73,6 +80,28 @@ export const getScheduledAds = async (req, res) => {
     res.status(500).json({ message: `Error fetching scheduled ads: ${error.message}` });
   }
 };
+
+// @desc    Get all ended ads (ads with endDate in the past)
+// @route   GET /api/ads/ended
+// @access  Admin
+export const getExpiredAds = async (req, res) => {
+  const now = new Date(); // Current date and time
+
+  try {
+    // Fetch ads with endDate in the past and status is "active"
+    const endedAds = await Ad.find({
+      endDate: { $lt: now },
+      status: "active",
+    });
+
+    res.status(200).json(endedAds);
+  } catch (error) {
+    console.error("Error fetching ended ads:", error.message);
+    res.status(500).json({ message: `Error fetching ended ads: ${error.message}` });
+  }
+};
+
+
 // @desc    Get all active ads (e.g., based on date range)
 // @route   GET /api/ads
 // @access  Public
@@ -161,12 +190,15 @@ export const softDeleteAd = async (req, res) => {
 
     // Soft delete the ad
     ad.status = "deleted";
-    await ad.save();
+
+    // Save the ad without triggering schema validation
+    await ad.save({ validateBeforeSave: false });
 
     // Decrement totalAds in AdminAnalytics
     await AdminAnalytics.findOneAndUpdate(
       {},
-      { $inc: { totalAds: -1 } }
+      { $inc: { totalAds: -1 } },
+      { upsert: true } // Ensures AdminAnalytics document exists
     );
 
     res.status(200).json({ message: "Ad marked as deleted successfully" });

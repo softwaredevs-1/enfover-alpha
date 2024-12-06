@@ -1,5 +1,25 @@
 import News from "../models/newsModel.js";
 
+// Create a news article (Admin only)
+export const createNews = async (req, res) => {
+  const { title, body } = req.body;
+
+  try {
+    const news = await News.create({
+      title,
+      body,
+      createdBy: req.user.id,
+      status: "active", // Ensure the default status is active
+    });
+
+    res.status(201).json(news);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
 // Get all news articles
 export const getAllNews = async (req, res) => {
   try {
@@ -20,23 +40,21 @@ export const getActiveNews = async (req, res) => {
   }
 };
 
-
-// Create a news article (Admin only)
-export const createNews = async (req, res) => {
-  const { title, body } = req.body;
-
+// Get all deleted news articles (Admin Only)
+export const getDeletedNews = async (req, res) => {
   try {
-    const news = await News.create({
-      title,
-      body,
-      createdBy: req.user.id,
-    });
+    const deletedNews = await News.find({ status: "deleted" });
 
-    res.status(201).json(news);
+    if (!deletedNews.length) {
+      return res.status(404).json({ message: "No deleted news articles found" });
+    }
+
+    res.status(200).json(deletedNews);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: `Error fetching deleted news: ${error.message}` });
   }
 };
+
 
 // Update a news article (Admin only)
 export const updateNews = async (req, res) => {

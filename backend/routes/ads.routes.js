@@ -5,28 +5,38 @@ import {
   getDeletedAds,
   editAd,
   softDeleteAd,
-  getScheduledAds
+  getScheduledAds,
+  getExpiredAds
 } from "../controllers/ads.controller.js";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
 import { getAdminAnalytics } from "../controllers/getAdminAnalytics.controller.js";
-import { upload } from "../utils/fileUpload.js"; // Import Multer
+import { upload } from "../utils/fileUpload.js"; // Multer for file uploads
 
 const router = express.Router();
 
+// Routes for ads management
+
+// Public route to fetch active ads
 router.route("/")
-.get(getActiveAds) // Public route to fetch active ads  
-.post(protect, adminOnly, upload.single("file"),createAd); // Admin-only route to create ads
+  .get(getActiveAds)
+  .post(protect, adminOnly, upload.single("file"), createAd); // Admin-only route to create ads
 
+// Admin-only route to fetch scheduled ads
 router.route("/scheduled")
-  .get(protect, adminOnly, getScheduledAds); // Admin: Get scheduled ads
+  .get(protect, adminOnly, getScheduledAds);
 
-router.route("/deleted").get(protect, adminOnly, getDeletedAds) // Public route to fetch deleted ads 
+// Admin-only route to fetch soft-deleted ads
+router.route("/deleted")
+  .get(protect, adminOnly, getDeletedAds);
 
+// Admin-only route to fetch analytics for ads
+router.get("/analytics", protect, adminOnly, getAdminAnalytics);
 
-router.get("/analytics", protect, adminOnly, getAdminAnalytics); // Admin: Get competition analytics
+router.get("/expired", protect, adminOnly, getExpiredAds)
 
+// Routes for specific ads (by ID)
 router.route("/:id")
   .put(protect, adminOnly, editAd) // Admin-only route to edit an ad
-  .delete(protect, adminOnly, softDeleteAd); // Admin-only route to delete ads
+  .delete(protect, adminOnly, softDeleteAd); // Admin-only route to soft delete ads
 
 export default router;
