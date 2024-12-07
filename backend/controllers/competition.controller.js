@@ -90,7 +90,7 @@ export const submitAnswers = async (req, res) => {
       if (question) {
         // Find the correct option for the question
         const correctOption = question.options.find((option) => option.isCorrect);
-        if (correctOption && correctOption.text === answer.selectedOption) {
+        if (correctOption && correctOption.id === answer.selectedOption) {
           score += 1; // Increment score for each correct answer
         }
       }

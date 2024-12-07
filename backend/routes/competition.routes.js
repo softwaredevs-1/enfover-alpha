@@ -7,7 +7,7 @@ import {
   submitAnswers,
   updateCompetition
 } from "../controllers/competition.controller.js";
-import { adminOnly, protect } from "../middleware/authMiddleware.js";
+import { adminOnly, protect, studentOnly } from "../middleware/authMiddleware.js";
 import { getAdminAnalytics } from "../controllers/getAdminAnalytics.controller.js";
 
 const router = express.Router();
@@ -19,8 +19,12 @@ router.post("/", protect, adminOnly, createCompetition);
 // Students: Submit answers
 router.post("/submit", protect, submitAnswers);
 
+
+
+// *********************************************
 // Students: Fetch competitions (limited view)
 router.get("/", protect, getCompetitions);
+// **************************************************
 
 // Admin: Fetch competitions (full view)
 router.get("/admin", protect, adminOnly, getCompetitionsAdmin);

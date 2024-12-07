@@ -5,7 +5,7 @@ const userSchema = mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    gender: {type: String, required: true},
+    gender: { type: String, required: true },
     role: {
       type: String,
       enum: ["Student", "Teacher", "Admin", "SuperAdmin"],
@@ -16,6 +16,16 @@ const userSchema = mongoose.Schema(
       required: function () {
         return this.role === "Student";
       },
+    },
+    activityStatus: {
+      type: String,
+      enum: ["active", "blocked"],
+      default: "active", // Admin manages this
+    },
+    subscriptionStatus: {
+      type: String,
+      enum: ["subscribed", "unsubscribed"],
+      default: "unsubscribed", // Default is unsubscribed until payment
     },
   },
   {

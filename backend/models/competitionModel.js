@@ -8,12 +8,16 @@ const optionSchema = mongoose.Schema(
   { _id: false } // Prevent automatic `_id` for options
 );
 
+
 const questionSchema = mongoose.Schema(
   {
     questionText: { type: String, required: true }, // Question text
     options: [optionSchema], // Array of options
   }
 );
+
+
+
 
 const participantSchema = mongoose.Schema(
   {
