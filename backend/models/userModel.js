@@ -11,27 +11,38 @@ const userSchema = mongoose.Schema(
       enum: ["Student", "Teacher", "Admin", "SuperAdmin"],
       default: "Student",
     },
+    adminRole: {
+      type: String,
+      enum: ["competitionAdmin", "coursesAdmin", "adsAdmin", "newsAdmin"],
+      required: function () {
+        return this.role === "Admin";
+      },
+    },
     grade: {
       type: String,
       required: function () {
         return this.role === "Student";
       },
     },
-    activityStatus: {
-      type: String,
-      enum: ["active", "blocked"],
-      default: "active", // Admin manages this
-    },
+    activityStatus: { type: String, enum: ["active", "blocked"], default: "active" },
     subscriptionStatus: {
       type: String,
       enum: ["subscribed", "unsubscribed"],
-      default: "unsubscribed", // Default is unsubscribed until payment
+      default: "unsubscribed",
+    },
+    verificationStatus: {
+      type: String,
+      enum: ["pending", "verified", "rejected"],
+      default: function () {
+        return this.role === "Teacher" || this.role === "Admin" ? "pending" : "verified";
+      },
     },
   },
   {
     timestamps: true,
   }
 );
+
 
 const User = mongoose.model("User", userSchema);
 

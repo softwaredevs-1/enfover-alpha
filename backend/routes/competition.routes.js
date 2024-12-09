@@ -7,14 +7,14 @@ import {
   submitAnswers,
   updateCompetition
 } from "../controllers/competition.controller.js";
-import { adminOnly, protect, studentOnly } from "../middleware/authMiddleware.js";
+import { protect, competitionAdminOnly } from "../middleware/authMiddleware.js";
 import { getAdminAnalytics } from "../controllers/getAdminAnalytics.controller.js";
 
 const router = express.Router();
 
 
 // Admin: Create a competition
-router.post("/", protect, adminOnly, createCompetition);
+router.post("/", protect, competitionAdminOnly, createCompetition);
 
 // Students: Submit answers
 router.post("/submit", protect, submitAnswers);
@@ -27,16 +27,16 @@ router.get("/", protect, getCompetitions);
 // **************************************************
 
 // Admin: Fetch competitions (full view)
-router.get("/admin", protect, adminOnly, getCompetitionsAdmin);
+router.get("/admin", protect, competitionAdminOnly, getCompetitionsAdmin);
 
 // Admin: Delete a competition
-router.delete("/:id", protect, adminOnly, deleteCompetition);
+router.delete("/:id", protect, competitionAdminOnly, deleteCompetition);
 
 // Admin: Update a competition
-router.put("/:id", protect, adminOnly, updateCompetition);
+router.put("/:id", protect, competitionAdminOnly, updateCompetition);
 
 //Admin: Get analytics data
-router.get("/analytics", protect, adminOnly, getAdminAnalytics); // Admin: Get competition analytics
+router.get("/analytics", protect, competitionAdminOnly, getAdminAnalytics); // Admin: Get competition analytics
 
 
 

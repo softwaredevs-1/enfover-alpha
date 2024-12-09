@@ -9,27 +9,24 @@ export const protect = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     try {
       token = req.headers.authorization.split(" ")[1];
-      console.log("Token received:", token); // Debug log
+      console.log("Token received:", token);
 
-      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("Decoded token:", decoded); // Debug log
+      console.log("Decoded token:", decoded);
 
-      // Attach user to the request object
       req.user = await User.findById(decoded.id).select("-password");
-      console.log("User found:", req.user); // Debug log
+      console.log("User found:", req.user);
 
       if (!req.user) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      next(); // Proceed to the next middleware
+      next();
     } catch (error) {
       console.error("Token verification failed:", error.message);
       return res.status(401).json({ message: "Not authorized, token failed" });
     }
   } else {
-    console.error("Authorization header missing or invalid");
     return res.status(401).json({ message: "Not authorized, no token" });
   }
 };
@@ -37,12 +34,16 @@ export const protect = async (req, res, next) => {
 // Middleware for admin-only access
 export const adminOnly = (req, res, next) => {
   if (req.user && (req.user.role === "Admin" || req.user.role === "SuperAdmin")) {
+    {
+      if (req.user.verificationStatus !== "verified") {
+        return res.status(403).json({ message: "Access denied. User not verified." });
+      }
+    }
     next(); // Proceed if user is Admin or SuperAdmin
   } else {
     res.status(403).json({ message: "Access denied. Admins only." });
   }
 };
-
 
 // Middleware for student-only access with payment verification
 export const studentOnly = (req, res, next) => {
@@ -55,6 +56,17 @@ export const studentOnly = (req, res, next) => {
     res.status(403).json({ message: "Access denied. Students only." });
   }
 };
+
+export const subscribedStudentOnly = (req, res, next) => {
+  if (req.user && req.user.role === "Student" && req.user.subscriptionStatus === "subscribed") {
+    next();
+  } else {
+    res.status(403).json({
+      message: "Access denied. Only subscribed students can access this content.",
+    });
+  }
+};
+
 
 // Middleware for teacher-only access
 export const teacherOnly = (req, res, next) => {
@@ -76,7 +88,7 @@ export const adminOrCreatorOnly = async (req, res, next) => {
     }
 
     const isCreator = req.user.id === course.createdBy.toString();
-    const isAdminOrSuperAdmin = req.user.role === "Admin" || req.user.role === "SuperAdmin";
+    const isAdminOrSuperAdmin = req.user.role === "courseAdmin" || req.user.role === "SuperAdmin";
 
     if (isCreator || isAdminOrSuperAdmin) {
       next();
@@ -89,3 +101,60 @@ export const adminOrCreatorOnly = async (req, res, next) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const superAdminOnly = (req, res, next) => {
+  console.log("User role:", req.user.role); // Log user role
+  if (req.user && req.user.role === "SuperAdmin") {
+    next();
+  } else {
+    res.status(403).json({
+      message: "Access denied. Super Admins only.",
+    });
+  }
+};
+
+export const verifiedOnly = (req, res, next) => {
+  if (
+    req.user.role === "Teacher" ||
+    req.user.role === "Admin"
+  ) {
+    if (req.user.verificationStatus !== "verified") {
+      return res.status(403).json({ message: "Access denied. User not verified." });
+    }
+  }
+  next();
+};
+
+
+export const competitionAdminOnly = (req, res, next) => {
+  if (req.user.role === "SuperAdmin" || req.user.adminRole === "competitionAdmin") {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied. Competition Admins only." });
+  }
+};
+
+export const coursesAdminOnly = (req, res, next) => {
+  if (req.user.role === "SuperAdmin" || req.user.adminRole === "coursesAdmin") {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied. Courses Admins only." });
+  }
+};
+
+export const adsAdminOnly = (req, res, next) => {
+  if (req.user.role === "SuperAdmin" || req.user.adminRole === "adsAdmin") {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied. Ads Admins only." });
+  }
+};
+
+export const newsAdminOnly = (req, res, next) => {
+  if (req.user.role === "SuperAdmin" || req.user.adminRole === "newsAdmin") {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied. News Admins only." });
+  }
+};
+
