@@ -13,7 +13,7 @@ const userSchema = mongoose.Schema(
     },
     adminRole: {
       type: String,
-      enum: ["competitionAdmin", "coursesAdmin", "adsAdmin", "newsAdmin"],
+      enum: ["competitionAdmin", "coursesAdmin", "adsAdmin", "newsAdmin", "userAdmin"],
       required: function () {
         return this.role === "Admin";
       },
@@ -28,13 +28,15 @@ const userSchema = mongoose.Schema(
     subscriptionStatus: {
       type: String,
       enum: ["subscribed", "unsubscribed"],
-      default: "unsubscribed",
+      default: function () {
+        return this.role === "Student" ? "unsubscribed" : undefined;
+      },
     },
     verificationStatus: {
       type: String,
       enum: ["pending", "verified", "rejected"],
       default: function () {
-        return this.role === "Teacher" || this.role === "Admin" ? "pending" : "verified";
+        return this.role === "Teacher" || this.role === "Admin" ? "pending" : undefined;
       },
     },
   },
@@ -42,7 +44,6 @@ const userSchema = mongoose.Schema(
     timestamps: true,
   }
 );
-
 
 const User = mongoose.model("User", userSchema);
 

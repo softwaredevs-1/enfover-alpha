@@ -114,20 +114,72 @@ export const superAdminOnly = (req, res, next) => {
 };
 
 export const verifiedOnly = (req, res, next) => {
-  if (
-    req.user.role === "Teacher" ||
-    req.user.role === "Admin"
-  ) {
+  // Allow verified Admins, Teachers, and SuperAdmins only
+  if (req.user.role === "Admin" || req.user.role === "Teacher") {
     if (req.user.verificationStatus !== "verified") {
-      return res.status(403).json({ message: "Access denied. User not verified." });
+      return res
+        .status(403)
+        .json({ message: "Access denied. User not verified." });
     }
   }
+
+  // SuperAdmins are always allowed without verification check
+  if (req.user.role === "SuperAdmin") {
+    return next();
+  }
+
   next();
 };
 
 
+
+export const verifiedActiveTeacherOnly = (req, res, next) => {
+  if (req.user.role === "Teacher") {
+    if (req.user.activityStatus !== "active") {
+      return res.status(403).json({ message: "Your account is not active." });
+    }
+    if (req.user.verificationStatus !== "verified") {
+      return res.status(403).json({ message: "Your account is not verified." });
+    }
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied. Teachers only." });
+  }
+};
+
+export const verifiedActiveAdminOnly = (req, res, next) => {
+  if (req.user.role === "Admin" || req.user.role === "SuperAdmin") {
+    if (req.user.activityStatus !== "active") {
+      return res.status(403).json({ message: "Your account is not active." });
+    }
+    if (req.user.role === "Admin" && req.user.verificationStatus !== "verified") {
+      return res.status(403).json({ message: "Your account is not verified." });
+    }
+    next(); // Proceed if verified and active
+  } else {
+    res.status(403).json({ message: "Access denied. Admins only." });
+  }
+};
+
+
+
+
+export const userAdminOnly = (req, res, next) => {
+  if (
+    (req.user.role === "SuperAdmin") ||
+    (req.user.role === "Admin" && req.user.adminRole === "userAdmin" && req.user.activityStatus === "active" && req.user.verificationStatus === "verified")
+  ) {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied. User Admins only." });
+  }
+};
+
 export const competitionAdminOnly = (req, res, next) => {
-  if (req.user.role === "SuperAdmin" || req.user.adminRole === "competitionAdmin") {
+  if (
+    (req.user.role === "SuperAdmin") ||
+    (req.user.role === "Admin" && req.user.adminRole === "competitionAdmin" && req.user.activityStatus === "active" && req.user.verificationStatus === "verified")
+  ) {
     next();
   } else {
     res.status(403).json({ message: "Access denied. Competition Admins only." });
@@ -135,7 +187,10 @@ export const competitionAdminOnly = (req, res, next) => {
 };
 
 export const coursesAdminOnly = (req, res, next) => {
-  if (req.user.role === "SuperAdmin" || req.user.adminRole === "coursesAdmin") {
+  if (
+    (req.user.role === "SuperAdmin") ||
+    (req.user.role === "Admin" && req.user.adminRole === "coursesAdmin" && req.user.activityStatus === "active" && req.user.verificationStatus === "verified")
+  ) {
     next();
   } else {
     res.status(403).json({ message: "Access denied. Courses Admins only." });
@@ -143,7 +198,10 @@ export const coursesAdminOnly = (req, res, next) => {
 };
 
 export const adsAdminOnly = (req, res, next) => {
-  if (req.user.role === "SuperAdmin" || req.user.adminRole === "adsAdmin") {
+  if (
+    (req.user.role === "SuperAdmin") ||
+    (req.user.role === "Admin" && req.user.adminRole === "adsAdmin" && req.user.activityStatus === "active" && req.user.verificationStatus === "verified")
+  ) {
     next();
   } else {
     res.status(403).json({ message: "Access denied. Ads Admins only." });
@@ -151,7 +209,10 @@ export const adsAdminOnly = (req, res, next) => {
 };
 
 export const newsAdminOnly = (req, res, next) => {
-  if (req.user.role === "SuperAdmin" || req.user.adminRole === "newsAdmin") {
+  if (
+    (req.user.role === "SuperAdmin") ||
+    (req.user.role === "Admin" && req.user.adminRole === "newsAdmin" && req.user.activityStatus === "active" && req.user.verificationStatus === "verified")
+  ) {
     next();
   } else {
     res.status(403).json({ message: "Access denied. News Admins only." });

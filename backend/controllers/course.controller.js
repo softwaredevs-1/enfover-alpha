@@ -2,10 +2,20 @@ import Course from "../models/courseModel.js";
 
 
 // Add a course (Teacher only)
+// Add a course (Verified and Active Teachers Only)
 export const addCourseContent = async (req, res) => {
   const { grade, title, description, content } = req.body;
 
   try {
+    // Check if the user is active and verified
+    if (req.user.activityStatus !== "active") {
+      return res.status(403).json({ message: "Your account is not active." });
+    }
+    if (req.user.verificationStatus !== "verified") {
+      return res.status(403).json({ message: "Your account is not verified." });
+    }
+
+    // Proceed to create the course
     const course = await Course.create({
       grade,
       title,
@@ -19,8 +29,6 @@ export const addCourseContent = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-
 
 // Update course details (Teacher only)
 export const updateCourse = async (req, res) => {
@@ -55,7 +63,6 @@ export const updateCourse = async (req, res) => {
     res.status(500).json({ message: `Error updating course: ${error.message}` });
   }
 };
-
 
 //soft delete a course 
 export const softDeleteCourse = async (req, res) => {
@@ -107,6 +114,36 @@ export const getAllCourses = async (req, res) => {
   }
 };
 
+// Get active courses
+export const getActiveCourses = async (req, res) => {
+  try {
+    const activeCourses = await Course.find({ status: "active" });
+
+    if (!activeCourses.length) {
+      return res.status(404).json({ message: "No active courses found." });
+    }
+
+    res.status(200).json(activeCourses);
+  } catch (error) {
+    res.status(500).json({ message: `Error fetching active courses: ${error.message}` });
+  }
+};
+
+// Get deleted courses
+export const getDeletedCourses = async (req, res) => {
+  try {
+    const deletedCourses = await Course.find({ status: "deleted" });
+
+    if (!deletedCourses.length) {
+      return res.status(404).json({ message: "No deleted courses found." });
+    }
+
+    res.status(200).json(deletedCourses);
+  } catch (error) {
+    res.status(500).json({ message: `Error fetching deleted courses: ${error.message}` });
+  }
+};
+
 
 
 
@@ -124,8 +161,6 @@ export const getCoursesByGrade = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-
 
 // Get specific course content by ID
 export const getCourseContent = async (req, res) => {

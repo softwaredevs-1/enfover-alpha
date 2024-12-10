@@ -218,6 +218,7 @@ export const getUserProfile = async (req, res) => {
         role: user.role,
         grade: user.grade,
         subscriptionStatus: user.subscriptionStatus,
+        verificationStatus: user.verificationStatus,
         activityStatus: user.activityStatus,
       });
     } else {
@@ -551,20 +552,36 @@ export const getVerifiedAdmin = async (req, res) => {
     res.status(500).json({ message: `Error fetching verified admins: ${error.message}` });
   }
 };
-export const getPendingAdmin = async (req, res) => {
+export const getPendingUser = async (req, res) => {
   try {
-    const pendingAdmin = await User.find({
+    const pendingUser = await User.find({
       role: { $in: ["Teacher", "Admin"] }, // Query for both Teacher and Admin roles
       verificationStatus: "pending", // Only fetch pending users
     }).select("-password");
 
-    if (!pendingAdmin.length) {
+    if (!pendingUser.length) {
       return res.status(404).json({ message: "No pending users found." });
     }
 
-    res.status(200).json(pendingAdmin);
+    res.status(200).json(pendingUser);
   } catch (error) {
     res.status(500).json({ message: `Error fetching pending users: ${error.message}` });
+  }
+};
+export const getRejectedUser = async (req, res) => {
+  try {
+    const rejectedUser = await User.find({
+      role: { $in: ["Teacher", "Admin"] }, // Query for both Teacher and Admin roles
+      verificationStatus: "rejected", // Only fetch pending users
+    }).select("-password");
+
+    if (!rejectedUser.length) {
+      return res.status(404).json({ message: "No rejected users found." });
+    }
+
+    res.status(200).json(rejectedUser);
+  } catch (error) {
+    res.status(500).json({ message: `Error fetching rejected users: ${error.message}` });
   }
 };
 

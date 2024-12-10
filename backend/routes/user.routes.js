@@ -17,7 +17,8 @@ import {
   verifyUser,
   getVerifiedTeacher,
   getVerifiedAdmin,
-  getPendingAdmin,
+  getPendingUser,
+  getRejectedUser,
 
 } from "../controllers/user.controller.js";
 import {
@@ -25,6 +26,8 @@ import {
   superAdminOnly,
   verifiedOnly,
   protect,
+  userAdminOnly,
+  studentOnly,
 } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -50,15 +53,16 @@ router.get("/active", protect, adminOnly, getActiveUsers); // Admin: Get active 
 router.get("/blocked", protect, adminOnly, getBlockedUsers); // Admin: Get blocked users
 
 // Subscription routes (Students only)
-router.put("/subscription-status", protect, updateSubscriptionStatus);
+router.put("/subscription-status", protect, studentOnly, updateSubscriptionStatus);
 router.get("/subscribed", protect, adminOnly, getSubscribedUsers); // Admin: Get subscribed users
 router.get("/unsubscribed", protect, adminOnly, getUnsubscribedUsers); // Admin: Get unsubscribed users
 
 // Super Admin routes
-router.put("/verify/:id", protect, adminOnly, verifyUser); // Super Admin: Verify pending users
+router.put("/verify/:id", protect, superAdminOnly, verifyUser); // Super Admin: Verify pending users
 router.get("/verified-teachers", protect, adminOnly, getVerifiedTeacher); // Super Admin: Get all verified teachers
 router.get("/verified-admins", protect, superAdminOnly, getVerifiedAdmin); // Super Admin: Get all verified admins
-router.get("/pending", protect, adminOnly,verifiedOnly, getPendingAdmin)
+router.get("/pending", protect, adminOnly, getPendingUser)
+router.get("/rejected", protect, adminOnly, getRejectedUser)
 
 
 export default router;
