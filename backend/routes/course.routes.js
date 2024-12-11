@@ -15,6 +15,7 @@ import {
   coursesAdminOnly,
   subscribedStudentOnly,
   verifiedActiveTeacherOnly,
+  courseContentAccess,
 } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -37,7 +38,7 @@ router.get("/", protect, coursesAdminOnly, getAllCourses);
 
 // Route: Get active courses
 // Access: Courses Admins only
-router.get("/active", protect, coursesAdminOnly, getActiveCourses);
+router.get("/active", protect, courseContentAccess, getActiveCourses);
 
 // Route: Get deleted courses
 // Access: Courses Admins only
@@ -45,10 +46,10 @@ router.get("/deleted", protect, coursesAdminOnly, getDeletedCourses);
 
 // Route: Get courses by grade
 // Access: Subscribed students and courses admins
-router.get("/:grade", protect, subscribedStudentOnly, getCoursesByGrade);
+router.get("/:grade", protect, courseContentAccess, getCoursesByGrade);
 
 // Route: Get specific course content by ID
 // Access: Subscribed students and courses admins
-router.get("/content/:id", protect, subscribedStudentOnly, getCourseContent);
+router.get("/content/:id", protect, courseContentAccess, getCourseContent);
 
 export default router;

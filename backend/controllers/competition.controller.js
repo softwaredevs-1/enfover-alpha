@@ -13,21 +13,90 @@ export const getCompetitionsAdmin = async (req, res) => {
   }
 };
 
-// Get all competitions for Students
+export const getCompetitionStud = async (req, res) => {
+  try {
+    const now = new Date();
+
+    let query = { status: "active" }; // Default query for active competitions
+
+    // Students can only see competitions with future deadlines
+    if (req.user.role === "Student") {
+      query.deadline = { $gte: now };
+    }
+
+    // Fetch competitions excluding the "questions" and "participants" fields
+    const competitions = await Competition.find(query).select("-questions -participants");
+
+    res.status(200).json(competitions);
+  } catch (error) {
+    console.error("Error fetching competitions:", error.message); // Debug log
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 export const getCompetitions = async (req, res) => {
   try {
-    const now = new Date(); // Current date and time
+    const now = new Date();
 
-    // Fetch competitions where the deadline is still in the future and status is active
-    const competitions = await Competition.find({
-      deadline: { $gte: now },
-      status: "active",
-    });
+    let query = { status: "active" }; // Default query for active competitions
+
+    // Students can only see competitions with future deadlines
+    if (req.user.role === "Student") {
+      query.deadline = { $gte: now };
+    }
+
+    const competitions = await Competition.find(query, "-questions");
     res.status(200).json(competitions);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getCompetitionContent = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the competition by ID
+    const competition = await Competition.findById(id);
+
+    if (!competition) {
+      return res.status(404).json({ message: "Competition not found" });
+    }
+
+    // Build response based on the role
+    let response = {
+      _id: competition._id,
+      title: competition.title,
+      description: competition.description,
+      deadline: competition.deadline,
+      prizes: competition.prizes,
+      status: competition.status,
+      createdBy: competition.createdBy,
+      createdAt: competition.createdAt,
+      updatedAt: competition.updatedAt,
+      questions: competition.questions, // Include questions for students and admins
+    };
+
+    // Include participants without their answers
+    if (competition.participants && competition.participants.length > 0) {
+      response.participants = competition.participants.map((participant) => ({
+        user: {
+          _id: participant.user._id,
+          name: participant.user.name,
+          email: participant.user.email,
+        },
+        score: participant.score, // Include score but exclude answers
+      }));
+    }
+
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(500).json({ message: `Error fetching competition content: ${error.message}` });
+  }
+};
+
+
 
 // Create a new competition (Admin only)
 export const createCompetition = async (req, res) => {
@@ -183,6 +252,8 @@ export const getAdminAnalytics = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 
 

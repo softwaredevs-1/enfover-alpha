@@ -161,6 +161,56 @@ export const verifiedActiveAdminOnly = (req, res, next) => {
   }
 };
 
+export const courseContentAccess = (req, res, next) => {
+  if (
+    (req.user.role === "Student" && req.user.subscriptionStatus === "subscribed") ||
+    (req.user.role === "Admin" && req.user.adminRole === "coursesAdmin" && req.user.verificationStatus === "verified" && req.user.activityStatus === "active") ||
+    req.user.role === "SuperAdmin"
+  ) {
+    return next();
+  }
+
+  res.status(403).json({ message: "Access denied. Only authorized users can access this content." });
+};
+
+
+
+// for the competition getActiveCompetitions
+export const subscribedStudentOrCompetitionAdmin = (req, res, next) => {
+  if (
+    (req.user.role === "Student" && req.user.subscriptionStatus === "subscribed") ||
+    (req.user.role === "Admin" && req.user.adminRole === "competitionAdmin") ||
+    req.user.role === "SuperAdmin"
+  ) {
+    return next();
+  }
+  res.status(403).json({ message: "Access denied." });
+};
+
+export const subscribedStudentOrVerifiedCompetitionAdmin = (req, res, next) => {
+  const { user } = req;
+
+  if (user.role === "Student") {
+    if (user.activityStatus !== "active" || user.subscriptionStatus !== "subscribed") {
+      return res.status(403).json({
+        message: "Access denied. Only active and subscribed students can access this content.",
+      });
+    }
+    return next();
+  }
+
+  if (user.role === "Admin" && user.adminRole === "competitionAdmin") {
+    if (user.activityStatus !== "active" || user.verificationStatus !== "verified") {
+      return res.status(403).json({
+        message: "Access denied. Only active and verified competition admins can access this content.",
+      });
+    }
+    return next();
+  }
+
+  return res.status(403).json({ message: "Access denied. Invalid role or permissions." });
+};
+
 
 
 

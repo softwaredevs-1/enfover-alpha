@@ -94,7 +94,7 @@ export const softDeleteCourse = async (req, res) => {
 
 
 
-// Get a list of all registered users (Admin only)
+// Get a list of all courses (Admin or SuperAdmin only, without content field)
 export const getAllCourses = async (req, res) => {
   try {
     console.log("User info:", req.user); // Debug log
@@ -104,8 +104,8 @@ export const getAllCourses = async (req, res) => {
       return res.status(403).json({ message: "Access denied. Admins only." });
     }
 
-    // Fetch all courses
-    const courses = await Course.find();
+    // Fetch all courses excluding the content field
+    const courses = await Course.find({}, "-content");
 
     res.status(200).json(courses);
   } catch (error) {
@@ -114,10 +114,32 @@ export const getAllCourses = async (req, res) => {
   }
 };
 
+// Get course content by course ID
+export const getCourseContentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch course by ID and return only the content
+    const course = await Course.findById(id, "content");
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    res.status(200).json(course.content);
+  } catch (error) {
+    console.error("Error fetching course content:", error.message); // Debug log
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
+
 // Get active courses
 export const getActiveCourses = async (req, res) => {
   try {
-    const activeCourses = await Course.find({ status: "active" });
+    const activeCourses = await Course.find({ status: "active" }, "-content");
 
     if (!activeCourses.length) {
       return res.status(404).json({ message: "No active courses found." });
@@ -132,7 +154,7 @@ export const getActiveCourses = async (req, res) => {
 // Get deleted courses
 export const getDeletedCourses = async (req, res) => {
   try {
-    const deletedCourses = await Course.find({ status: "deleted" });
+    const deletedCourses = await Course.find({ status: "deleted" }, "-content");
 
     if (!deletedCourses.length) {
       return res.status(404).json({ message: "No deleted courses found." });
