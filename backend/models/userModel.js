@@ -25,6 +25,7 @@ const userSchema = mongoose.Schema(
       },
     },
     activityStatus: { type: String, enum: ["active", "blocked"], default: "active" },
+
     subscriptionStatus: {
       type: String,
       enum: ["subscribed", "unsubscribed"],
@@ -39,6 +40,14 @@ const userSchema = mongoose.Schema(
         return this.role === "Teacher" || this.role === "Admin" ? "pending" : undefined;
       },
     },
+    inviteCode: { type: String, unique: true }, // Unique invite code for each user
+    invitedUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ], // List of users invited by this user
+    points: { type: Number, default: 0 }, // Points earned by inviting users
   },
   {
     timestamps: true,

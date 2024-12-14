@@ -12,8 +12,22 @@ const adsSchema = mongoose.Schema(
       url: { type: String }, // URL for external content (e.g., hosted files)
       file: { type: String }, // File path for uploaded content
     },
-    startDate: { type: Date, required: true }, // When the ad should start showing
-    endDate: { type: Date, required: true }, // When the ad should stop showing
+    startDate: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: (value) => !isNaN(new Date(value).getTime()),
+        message: "Invalid start date format",
+      },
+    },
+    endDate: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: (value) => !isNaN(new Date(value).getTime()),
+        message: "Invalid end date format",
+      },
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

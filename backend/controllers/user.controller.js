@@ -1,6 +1,8 @@
 import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import generateTokenAndSetCookies from "../utils/generateToken.js";
+import { nanoid } from "nanoid";
+
 
 // @desc    Register a new user
 // @route   POST /api/users/register
@@ -62,7 +64,7 @@ import generateTokenAndSetCookies from "../utils/generateToken.js";
 
 // Register a new user
 export const registerUser = async (req, res) => {
-  const { name, email, password, gender, role, grade, adminRole } = req.body;
+  const { name, email, password, gender, role, grade, adminRole, inviteCode } = req.body;
 
   try {
     // Check if user already exists
@@ -81,12 +83,23 @@ export const registerUser = async (req, res) => {
       password: hashedPassword,
       gender,
       role: role || "Student", // Default role is Student
+      inviteCode: nanoid(8), // Generate a unique inviteCode for this user
     };
 
     // Assign subscriptionStatus for Students
     if (role === "Student") {
       userData.grade = grade; // Add grade for students
       userData.subscriptionStatus = "unsubscribed"; // Default subscription status
+
+      // If an inviteCode is provided, handle the inviter logic
+      if (inviteCode) {
+        const inviter = await User.findOne({ inviteCode });
+        if (inviter && inviter.role === "Student") {
+          inviter.points = (inviter.points || 0) + 1; // Add 1 point to inviter
+          inviter.invitedUsers = [...(inviter.invitedUsers || []), email]; // Track invited user
+          await inviter.save();
+        }
+      }
     }
 
     // Assign adminRole and verificationStatus for Admins
@@ -115,6 +128,7 @@ export const registerUser = async (req, res) => {
       adminRole: user.adminRole,
       grade: user.grade,
       verificationStatus: user.verificationStatus,
+      inviteCode: user.inviteCode, // Include the inviteCode in the response
       token,
     };
 
@@ -130,11 +144,12 @@ export const registerUser = async (req, res) => {
 };
 
 
+
 // @desc    Authenticate a user and get token
 // @route   POST /api/users/login
 // @access  Public
 
-// Authenticate a user and get token
+
 // Authenticate a user and get token
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -341,9 +356,6 @@ export const getAllUsers = async (req, res) => {
 
 
 
-
-
-
 // Admin: Update activity status (active/blocked)
 export const updateActivityStatus = async (req, res) => {
   const { id } = req.params; // Ensure the ID comes from params
@@ -429,7 +441,30 @@ export const getActiveTeachers = async (req, res) => {
 
 
 
+
+
 // Student: Update subscription status (subscribed/unsubscribed)
+// export const updateSubscriptionStatus = async (req, res) => {
+//   try {
+//     const user = await User.findById(req.user.id);
+
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     if (user.role !== "Student") {
+//       return res.status(403).json({ message: "Only students can update subscription status" });
+//     }
+
+//     const newStatus = user.subscriptionStatus === "subscribed" ? "unsubscribed" : "subscribed";
+//     user.subscriptionStatus = newStatus;
+//     await user.save();
+
+//     res.status(200).json({ message: `Your subscription status is now ${newStatus}` });
+//   } catch (error) {
+//     res.status(500).json({ message: `Error updating subscription status: ${error.message}` });
+//   }
+// };
 export const updateSubscriptionStatus = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -442,15 +477,114 @@ export const updateSubscriptionStatus = async (req, res) => {
       return res.status(403).json({ message: "Only students can update subscription status" });
     }
 
-    const newStatus = user.subscriptionStatus === "subscribed" ? "unsubscribed" : "subscribed";
-    user.subscriptionStatus = newStatus;
+    // Check if the user is unsubscribed
+    if (user.subscriptionStatus === "unsubscribed") {
+      // Update subscription status to "subscribed"
+      user.subscriptionStatus = "subscribed";
+
+      // If the user was invited, update inviter points
+      if (user.invitedBy) {
+        const inviter = await User.findById(user.invitedBy);
+
+        if (inviter) {
+          inviter.points = (inviter.points || 0) + 1; // Increment inviter's points
+          inviter.invitedUsers = [...(inviter.invitedUsers || []), user.id]; // Add this user to inviter's invited list
+          await inviter.save();
+        }
+      }
+    } else {
+      // Update subscription status to "unsubscribed"
+      user.subscriptionStatus = "unsubscribed";
+    }
+
     await user.save();
 
-    res.status(200).json({ message: `Your subscription status is now ${newStatus}` });
+    res.status(200).json({ message: `Your subscription status is now ${user.subscriptionStatus}` });
   } catch (error) {
     res.status(500).json({ message: `Error updating subscription status: ${error.message}` });
   }
 };
+
+//This handles invite codes during registration.
+export const handleInvite = async (inviteCode) => {
+  try {
+    const inviter = await User.findOne({ inviteCode });
+    if (!inviter) {
+      return null;
+    }
+    return inviter._id; // Return inviter's ID
+  } catch (error) {
+    console.error("Error handling invite:", error.message);
+    return null;
+  }
+};
+
+// Generate a student's invite link
+export const generateInviteLink = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (user.role !== "Student") {
+      return res.status(403).json({ message: "Only students can generate an invite link" });
+    }
+
+    if (!user.inviteCode) {
+      return res.status(400).json({ message: "Invite code not available for the user" });
+    }
+
+    const inviteLink = `${process.env.CLIENT_URL}/register?inviteCode=${user.inviteCode}`;
+
+    res.status(200).json({ inviteLink });
+  } catch (error) {
+    res.status(500).json({ message: `Error generating invite link: ${error.message}` });
+  }
+};
+
+
+// Get top inviters (Super Admin only)
+export const getTopInviters = async (req, res) => {
+  try {
+    const topInviters = await User.find({ role: "Student", invitePoints: { $gt: 0 } })
+      .select("name email invitePoints")
+      .sort({ invitePoints: -1 }) // Sort by points in descending order
+      .limit(10); // Limit to top 10
+
+    if (!topInviters.length) {
+      return res.status(404).json({ message: "No inviters found" });
+    }
+
+    res.status(200).json(topInviters);
+  } catch (error) {
+    res.status(500).json({ message: `Error fetching top inviters: ${error.message}` });
+  }
+};
+
+
+// Get points for a student inviter
+export const getInviterPoints = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (user.role !== "Student") {
+      return res.status(403).json({ message: "Only students can access their invite points" });
+    }
+
+    res.status(200).json({
+      inviter: {
+        name: user.name,
+        email: user.email,
+        points: user.invitePoints || 0, // Default points to 0 if not set
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: `Error fetching inviter points: ${error.message}` });
+  }
+};
+
+
+
+
+
 
 // Get a list of all subscribed students (Admin only)
 export const getSubscribedUsers = async (req, res) => {
@@ -467,6 +601,7 @@ export const getSubscribedUsers = async (req, res) => {
     res.status(500).json({ message: `Error fetching subscribed students: ${error.message}` });
   }
 };
+
 // Get a list of all unsubscribed students (Admin only)
 export const getUnsubscribedUsers = async (req, res) => {
   try {
@@ -482,8 +617,6 @@ export const getUnsubscribedUsers = async (req, res) => {
     res.status(500).json({ message: `Error fetching unsubscribed students: ${error.message}` });
   }
 };
-
-
 
 
 export const verifyUser = async (req, res) => {
@@ -515,6 +648,7 @@ export const verifyUser = async (req, res) => {
     res.status(500).json({ message: `Error updating verification status: ${error.message}` });
   }
 };
+
 export const getVerifiedTeacher = async (req, res) => {
   try {
     const verifiedTeachers = await User.find({
@@ -552,6 +686,7 @@ export const getVerifiedAdmin = async (req, res) => {
     res.status(500).json({ message: `Error fetching verified admins: ${error.message}` });
   }
 };
+
 export const getPendingUser = async (req, res) => {
   try {
     const pendingUser = await User.find({
@@ -568,6 +703,7 @@ export const getPendingUser = async (req, res) => {
     res.status(500).json({ message: `Error fetching pending users: ${error.message}` });
   }
 };
+
 export const getRejectedUser = async (req, res) => {
   try {
     const rejectedUser = await User.find({

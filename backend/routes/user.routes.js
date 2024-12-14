@@ -19,6 +19,9 @@ import {
   getVerifiedAdmin,
   getPendingUser,
   getRejectedUser,
+  generateInviteLink,
+  getInviterPoints,
+  getTopInviters,
 
 } from "../controllers/user.controller.js";
 import {
@@ -36,6 +39,11 @@ const router = express.Router();
 router.post("/register", registerUser); // User registration
 router.post("/login", loginUser); // User login
 router.post("/logout", logoutUser); // User logout
+
+// Routes for Invite System
+router.get("/invite-link", protect, studentOnly, generateInviteLink); // Generate a student's invite link
+router.get("/points", protect, studentOnly, getInviterPoints); // Fetch inviter points for a student
+router.get("/top-inviters", protect, superAdminOnly, getTopInviters); // Fetch top inviters (Super Admin)
 
 // Protected routes
 router.put("/profile", protect, updateUserProfile); // Edit user profile

@@ -80,3 +80,28 @@ export const verifyPayment = async (req, res) => {
     res.status(500).json({ message: `Error verifying payment: ${error.message}` });
   }
 };
+
+export const chapaWebhook = async (req, res) => {
+  const { tx_ref, status } = req.body;
+
+  try {
+    if (status === "success") {
+      // Find user by tx_ref
+      const user = await User.findOne({ tx_ref });
+
+      if (user && user.role === "Student") {
+        // Update subscription status to subscribed
+        user.subscriptionStatus = "subscribed";
+        await user.save();
+
+        res.status(200).json({ message: "Subscription updated successfully" });
+      } else {
+        res.status(404).json({ message: "User not found" });
+      }
+    } else {
+      res.status(400).json({ message: "Payment not successful" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: `Error handling Chapa webhook: ${error.message}` });
+  }
+};

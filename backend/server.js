@@ -15,6 +15,8 @@ import courseRoutes from "./routes/course.routes.js";
 import competitionRoutes from "./routes/competition.routes.js";
 import adsRoutes from "./routes/ads.routes.js"
 import paymentRoutes from "./routes/payment.routes.js";
+import { getAdminAnalytics } from "./controllers/getAdminAnalytics.controller.js";
+import { superAdminOnly, adminOnly, protect } from "./middleware/authMiddleware.js";
 
 
 // Load environment variables
@@ -39,6 +41,8 @@ app.use("/api/courses", courseRoutes); // Courses section routes
 app.use("/api/competitions", competitionRoutes); // Competition routes
 app.use("/api/ads", adsRoutes); // Ads routes
 app.use("/api/payments", paymentRoutes); //payment routes
+
+app.use("/api/analytics",protect, adminOnly, getAdminAnalytics)
 
 
 

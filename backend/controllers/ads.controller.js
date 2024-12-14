@@ -4,33 +4,71 @@ import AdminAnalytics from "../models/adminAnalyticsModel.js";
 // @desc    Create a new ad
 // @route   POST /api/ads
 // @access  Admin
+// export const createAd = async (req, res) => {
+//   const { title, contentType, startDate, endDate, url } = req.body;
+
+//   try {
+//     // Check for file upload
+//     let fileUrl = null;
+//     if (req.file) {
+//       fileUrl = `/uploads/ads/${req.file.filename}`;
+//     }
+
+//     // Validate content
+//     if (!contentType || (!fileUrl && !url)) 
+//       {
+//       return res
+//         .status(400)
+//         .json({ message: "Content type and either a file or URL are required." });
+//     }
+
+//     // Create ad in the database
+//     const ad = await Ad.create({
+//       title,
+//       content: {
+//         type: contentType,
+//         url: fileUrl || url,
+//       },
+//       startDate,
+//       endDate,
+//       createdBy: req.user.id,
+//     });
+
+//     res.status(201).json(ad);
+//   } catch (error) {
+//     res.status(500).json({ message: `Error creating ad: ${error.message}` });
+//   }
+// };
+
+// Create a new ad
 export const createAd = async (req, res) => {
-  const { title, contentType, startDate, endDate, url } = req.body;
+  const { title, contentType, startDate, endDate } = req.body;
 
   try {
-    // Check for file upload
+    // Ensure valid date parsing
+    const parsedStartDate = new Date(startDate);
+    const parsedEndDate = new Date(endDate);
+
+    if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+      return res.status(400).json({ message: "Invalid date format for startDate or endDate" });
+    }
+
+    // Handle file upload
     let fileUrl = null;
     if (req.file) {
-      fileUrl = `/uploads/ads/${req.file.filename}`;
+      fileUrl = `/uploads/ads/${req.file.filename}`; // Path to uploaded file
     }
 
-    // Validate content
-    if (!contentType || (!fileUrl && !url)) {
-      return res
-        .status(400)
-        .json({ message: "Content type and either a file or URL are required." });
-    }
-
-    // Create ad in the database
+    // Create the ad
     const ad = await Ad.create({
       title,
       content: {
-        type: contentType,
-        url: fileUrl || url,
+        type: contentType, // "Image", "Video", or "Text"
+        url: fileUrl || req.body.url, // Use uploaded file or provided URL
       },
-      startDate,
-      endDate,
-      createdBy: req.user.id,
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
+      createdBy: req.user.id, // Admin creating the ad
     });
 
     res.status(201).json(ad);

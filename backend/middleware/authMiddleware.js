@@ -32,12 +32,12 @@ export const protect = async (req, res, next) => {
 };
 
 // Middleware for admin-only access
+// Middleware for admin-only access
 export const adminOnly = (req, res, next) => {
   if (req.user && (req.user.role === "Admin" || req.user.role === "SuperAdmin")) {
-    {
-      if (req.user.verificationStatus !== "verified") {
-        return res.status(403).json({ message: "Access denied. User not verified." });
-      }
+    // Check verification status for Admins only (not for SuperAdmins)
+    if (req.user.role === "Admin" && req.user.verificationStatus !== "verified") {
+      return res.status(403).json({ message: "Access denied. User not verified." });
     }
     next(); // Proceed if user is Admin or SuperAdmin
   } else {
@@ -45,12 +45,13 @@ export const adminOnly = (req, res, next) => {
   }
 };
 
+
 // Middleware for student-only access with payment verification
 export const studentOnly = (req, res, next) => {
   if (req.user && req.user.role === "Student") {
-    if (!req.user.isSubscribed) {
-      return res.status(403).json({ message: "Access denied. Payment required." });
-    }
+    // if (!req.user.isSubscribed) {
+    //   return res.status(403).json({ message: "Access denied. Payment required." });
+    // }
     next();
   } else {
     res.status(403).json({ message: "Access denied. Students only." });
@@ -58,14 +59,19 @@ export const studentOnly = (req, res, next) => {
 };
 
 export const subscribedStudentOnly = (req, res, next) => {
-  if (req.user && req.user.role === "Student" && req.user.subscriptionStatus === "subscribed") {
-    next();
-  } else {
-    res.status(403).json({
-      message: "Access denied. Only subscribed students can access this content.",
+  if (req.user && req.user.role === "Student") {
+    if (req.user.subscriptionStatus === "subscribed") {
+      return next();
+    }
+    return res.status(403).json({
+      message: "Access denied. Please complete payment to subscribe.",
+      paymentUrl: `${process.env.BACKEND_URL}/api/payments/initiate`, // Redirect to Chapa payment
     });
+  } else {
+    return res.status(403).json({ message: "Access denied. Students only." });
   }
 };
+
 
 
 // Middleware for teacher-only access
@@ -174,7 +180,6 @@ export const courseContentAccess = (req, res, next) => {
 };
 
 
-
 // for the competition getActiveCompetitions
 export const subscribedStudentOrCompetitionAdmin = (req, res, next) => {
   if (
@@ -254,7 +259,7 @@ export const adsAdminOnly = (req, res, next) => {
   ) {
     next();
   } else {
-    res.status(403).json({ message: "Access denied. Ads Admins only." });
+    res.status(403).json({ message: "Access denied. Account is in pending status or blocked, contact the super admin." });
   }
 };
 

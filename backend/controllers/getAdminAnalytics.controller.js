@@ -6,7 +6,7 @@ export const getAdminAnalytics = async (req, res) => {
   try {
     const now = new Date();
 
-    // Calculate ads-related analytics dynamically
+    // Ads-related statistics
     const totalAds = await Ad.countDocuments({ status: "active" });
     const totalExpiredAds = await Ad.countDocuments({
       endDate: { $lt: now },
@@ -14,7 +14,7 @@ export const getAdminAnalytics = async (req, res) => {
     });
     const totalDeletedAds = await Ad.countDocuments({ status: "deleted" });
 
-    // Calculate user-related statistics
+    // User-related statistics
     const totalStudents = await User.countDocuments({ role: "Student" });
     const activeStudents = await User.countDocuments({
       role: "Student",
@@ -65,7 +65,7 @@ export const getAdminAnalytics = async (req, res) => {
       verificationStatus: "rejected",
     });
 
-    // Admin roles breakdown
+    // Admin role breakdown
     const competitionAdmins = await User.countDocuments({
       role: "Admin",
       adminRole: "competitionAdmin",
@@ -82,6 +82,17 @@ export const getAdminAnalytics = async (req, res) => {
       role: "Admin",
       adminRole: "newsAdmin",
     });
+
+    // Invite-related statistics
+    const totalInvitedUsers = await User.countDocuments({ invitedBy: { $exists: true } });
+    const totalPointsEarned = await User.aggregate([
+      { $match: { points: { $exists: true } } },
+      { $group: { _id: null, totalPoints: { $sum: "$points" } } },
+    ]);
+    const topInviters = await User.find({ role: "Student" })
+      .sort({ points: -1 })
+      .limit(10)
+      .select("name email points");
 
     // Retrieve or initialize admin analytics document
     let analytics = await AdminAnalytics.findOne({});
@@ -104,7 +115,7 @@ export const getAdminAnalytics = async (req, res) => {
       await analytics.save();
     }
 
-    // Return analytics with additional user-related data
+    // Return analytics with additional user-related and invite-related data
     res.status(200).json({
       analytics,
       users: {
@@ -127,13 +138,18 @@ export const getAdminAnalytics = async (req, res) => {
           verified: verifiedAdmins,
           pending: pendingAdmins,
           rejected: rejectedAdmins,
-          roles: {
+          role: {
             competitionAdmins,
             coursesAdmins,
             adsAdmins,
             newsAdmins,
           },
         },
+      },
+      invites: {
+        totalInvitedUsers,
+        totalPointsEarned: totalPointsEarned.length > 0 ? totalPointsEarned[0].totalPoints : 0,
+        topInviters,
       },
     });
   } catch (error) {
