@@ -9,13 +9,13 @@ export const protect = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     try {
       token = req.headers.authorization.split(" ")[1];
-      console.log("Token received:", token);
+      // console.log("Token received:", token);
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("Decoded token:", decoded);
+      // console.log("Decoded token:", decoded);
 
       req.user = await User.findById(decoded.id).select("-password");
-      console.log("User found:", req.user);
+      // console.log("User found:", req.user);
 
       if (!req.user) {
         return res.status(404).json({ message: "User not found" });
@@ -109,7 +109,7 @@ export const adminOrCreatorOnly = async (req, res, next) => {
 };
 
 export const superAdminOnly = (req, res, next) => {
-  console.log("User role:", req.user.role); // Log user role
+  // console.log("User role:", req.user.role); // Log user role
   if (req.user && req.user.role === "SuperAdmin") {
     next();
   } else {

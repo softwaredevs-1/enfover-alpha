@@ -63,14 +63,27 @@ import { nanoid } from "nanoid";
 // };
 
 // Register a new user
+// Register a new user
 export const registerUser = async (req, res) => {
-  const { name, email, password, gender, role, grade, adminRole, inviteCode } = req.body;
+  const { name, email, password, gender, role, grade } = req.body;
+  const { inviteCode } = req.query; // Extract inviteCode from the query string
 
   try {
     // Check if user already exists
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
+    }
+
+    // Check if role is "SuperAdmin"
+    if (role === "SuperAdmin") {
+      return res.status(403).json({ message: "Registering as SuperAdmin is not allowed." });
+    }
+
+    // Check if a SuperAdmin already exists
+    const superAdminExists = await User.findOne({ role: "SuperAdmin" });
+    if (!superAdminExists && role !== "SuperAdmin") {
+      return res.status(400).json({ message: "A SuperAdmin must already exist in the system." });
     }
 
     // Hash the password
@@ -94,23 +107,11 @@ export const registerUser = async (req, res) => {
       // If an inviteCode is provided, handle the inviter logic
       if (inviteCode) {
         const inviter = await User.findOne({ inviteCode });
+
         if (inviter && inviter.role === "Student") {
-          inviter.points = (inviter.points || 0) + 1; // Add 1 point to inviter
-          inviter.invitedUsers = [...(inviter.invitedUsers || []), email]; // Track invited user
-          await inviter.save();
+          userData.invitedBy = inviter.inviteCode; // Store the inviter's inviteCode in the new user's data
         }
       }
-    }
-
-    // Assign adminRole and verificationStatus for Admins
-    if (role === "Admin") {
-      userData.adminRole = adminRole;
-      userData.verificationStatus = "pending"; // Admins require verification
-    }
-
-    // Assign verificationStatus for Teachers
-    if (role === "Teacher") {
-      userData.verificationStatus = "pending"; // Teachers require verification
     }
 
     // Create the user
@@ -125,23 +126,20 @@ export const registerUser = async (req, res) => {
       email: user.email,
       gender: user.gender,
       role: user.role,
-      adminRole: user.adminRole,
       grade: user.grade,
-      verificationStatus: user.verificationStatus,
+      invitedBy: user.invitedBy,
       inviteCode: user.inviteCode, // Include the inviteCode in the response
+      subscriptionStatus: user.subscriptionStatus,
       token,
     };
-
-    // Add subscriptionStatus to response for Students
-    if (role === "Student") {
-      response.subscriptionStatus = user.subscriptionStatus;
-    }
 
     res.status(201).json(response);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 
 
@@ -184,6 +182,8 @@ export const loginUser = async (req, res) => {
       grade: user.grade,
       activityStatus: user.activityStatus,
       verificationStatus: user.verificationStatus,
+      inviteCode: user.inviteCode,
+      invitedBy: user.invitedBy,
       token,
     };
 
@@ -235,6 +235,11 @@ export const getUserProfile = async (req, res) => {
         subscriptionStatus: user.subscriptionStatus,
         verificationStatus: user.verificationStatus,
         activityStatus: user.activityStatus,
+        inviteCode: user.inviteCode,
+        invitedBy: user.invitedBy,
+        invitedUsers: user.invitedUsers,
+        invitedEmails:user.invitedEmails,
+        points: user.points
       });
     } else {
       res.status(404).json({ message: "User not found" });
@@ -329,6 +334,9 @@ export const getAllUsers = async (req, res) => {
         gender: user.gender,
         role: user.role,
         activityStatus: user.activityStatus,
+        subscriptionStatus: user.subscriptionStatus,
+        invitedBy: user.invitedBy,
+        inviteCode: user.inviteCode
       };
 
       // Include subscriptionStatus only for students
@@ -444,27 +452,6 @@ export const getActiveTeachers = async (req, res) => {
 
 
 // Student: Update subscription status (subscribed/unsubscribed)
-// export const updateSubscriptionStatus = async (req, res) => {
-//   try {
-//     const user = await User.findById(req.user.id);
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     if (user.role !== "Student") {
-//       return res.status(403).json({ message: "Only students can update subscription status" });
-//     }
-
-//     const newStatus = user.subscriptionStatus === "subscribed" ? "unsubscribed" : "subscribed";
-//     user.subscriptionStatus = newStatus;
-//     await user.save();
-
-//     res.status(200).json({ message: `Your subscription status is now ${newStatus}` });
-//   } catch (error) {
-//     res.status(500).json({ message: `Error updating subscription status: ${error.message}` });
-//   }
-// };
 export const updateSubscriptionStatus = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -477,18 +464,18 @@ export const updateSubscriptionStatus = async (req, res) => {
       return res.status(403).json({ message: "Only students can update subscription status" });
     }
 
-    // Check if the user is unsubscribed
     if (user.subscriptionStatus === "unsubscribed") {
       // Update subscription status to "subscribed"
       user.subscriptionStatus = "subscribed";
 
-      // If the user was invited, update inviter points
+      // If the user was invited, update inviter's points and invitedUsers list
       if (user.invitedBy) {
-        const inviter = await User.findById(user.invitedBy);
+        const inviter = await User.findOne({ inviteCode: user.invitedBy }); // Find inviter by inviteCode
 
         if (inviter) {
           inviter.points = (inviter.points || 0) + 1; // Increment inviter's points
-          inviter.invitedUsers = [...(inviter.invitedUsers || []), user.id]; // Add this user to inviter's invited list
+          inviter.invitedUsers = [...(inviter.invitedUsers || []), user._id]; // Add this user's _id to inviter's invitedUsers
+          inviter.invitedEmails = [...(inviter.invitedEmails || []), user.email]; // Track invited user's email
           await inviter.save();
         }
       }
@@ -504,6 +491,10 @@ export const updateSubscriptionStatus = async (req, res) => {
     res.status(500).json({ message: `Error updating subscription status: ${error.message}` });
   }
 };
+
+
+
+
 
 //This handles invite codes during registration.
 export const handleInvite = async (inviteCode) => {
@@ -532,7 +523,7 @@ export const generateInviteLink = async (req, res) => {
       return res.status(400).json({ message: "Invite code not available for the user" });
     }
 
-    const inviteLink = `${process.env.CLIENT_URL}/register?inviteCode=${user.inviteCode}`;
+    const inviteLink = `${process.env.CLIENT_URL}/register?inviteCode=${user.inviteCode}`; // Include inviteCode in the URL
 
     res.status(200).json({ inviteLink });
   } catch (error) {
@@ -541,16 +532,19 @@ export const generateInviteLink = async (req, res) => {
 };
 
 
+
+// Get top inviters (Super Admin only)
 // Get top inviters (Super Admin only)
 export const getTopInviters = async (req, res) => {
   try {
-    const topInviters = await User.find({ role: "Student", invitePoints: { $gt: 0 } })
-      .select("name email invitePoints")
-      .sort({ invitePoints: -1 }) // Sort by points in descending order
-      .limit(10); // Limit to top 10
+    // Find top inviters sorted by points in descending order
+    const topInviters = await User.find({ role: "Student", points: { $gt: 0 } })
+      .select("name email points invitedUsers invitedEmails")
+      .sort({ points: -1 }) // Sort by points in descending order
+      .limit(10); // Limit to top 10 inviters
 
     if (!topInviters.length) {
-      return res.status(404).json({ message: "No inviters found" });
+      return res.status(404).json({ message: "No inviters found." });
     }
 
     res.status(200).json(topInviters);
@@ -561,19 +555,23 @@ export const getTopInviters = async (req, res) => {
 
 
 // Get points for a student inviter
+// Get points for a student inviter
 export const getInviterPoints = async (req, res) => {
   try {
     const user = req.user;
 
     if (user.role !== "Student") {
-      return res.status(403).json({ message: "Only students can access their invite points" });
+      return res.status(403).json({ message: "Only students can access their invite points." });
     }
 
+    // Return inviter details with points
     res.status(200).json({
       inviter: {
         name: user.name,
         email: user.email,
-        points: user.invitePoints || 0, // Default points to 0 if not set
+        points: user.points || 0, // Use points and default to 0 if not set
+        invitedUsers: user.invitedUsers || [], // Include invited users
+        invitedEmails: user.invitedEmails || [], // Include invited emails
       },
     });
   } catch (error) {

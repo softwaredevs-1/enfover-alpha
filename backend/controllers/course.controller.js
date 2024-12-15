@@ -97,7 +97,7 @@ export const softDeleteCourse = async (req, res) => {
 // Get a list of all courses (Admin or SuperAdmin only, without content field)
 export const getAllCourses = async (req, res) => {
   try {
-    console.log("User info:", req.user); // Debug log
+    // console.log("User info:", req.user); // Debug log
 
     // Validate admin or super admin role
     if (!["Admin", "SuperAdmin"].includes(req.user.role)) {
@@ -173,11 +173,11 @@ export const getDeletedCourses = async (req, res) => {
 // Get courses by grade
 export const getCoursesByGrade = async (req, res) => {
   const { grade } = req.params;
-  console.log("Requested grade:", grade); // Log grade for debugging
+  // console.log("Requested grade:", grade); // Log grade for debugging
 
   try {
     const courses = await Course.find({ grade, status: "active" });
-    console.log("Found courses:", courses); // Log found courses
+    // console.log("Found courses:", courses); // Log found courses
     res.json(courses);
   } catch (error) {
     res.status(500).json({ message: error.message });

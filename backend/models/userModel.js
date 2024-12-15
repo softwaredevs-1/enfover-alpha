@@ -41,12 +41,19 @@ const userSchema = mongoose.Schema(
       },
     },
     inviteCode: { type: String, unique: true }, // Unique invite code for each user
+    invitedBy: { type: String }, // Store the inviteCode of the inviter
     invitedUsers: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
     ], // List of users invited by this user
+    invitedEmails: [
+      {
+        type: String, // Store email addresses as strings
+      },
+    ],
+    
     points: { type: Number, default: 0 }, // Points earned by inviting users
   },
   {
