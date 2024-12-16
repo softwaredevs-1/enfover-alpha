@@ -1,19 +1,17 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from "../redux/slices/authSlice";
+import { login } from "../redux/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const { loading, error } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-
   const { email, password } = formData;
 
   const handleChange = (e) => {
@@ -22,7 +20,8 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(loginUser(formData))
+
+    dispatch(login(formData))
       .unwrap()
       .then((data) => {
         // Navigate based on user role
@@ -38,48 +37,66 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <form
-        className="bg-white p-8 shadow-md rounded-md"
         onSubmit={handleSubmit}
+        className="bg-white p-8 shadow-2xl rounded-lg w-full max-w-md transition-all duration-500 ease-in-out"
       >
-        <h2 className="text-2xl font-semibold mb-4 text-center">Login</h2>
+        {/* Title */}
+        <h2 className="text-3xl font-semibold mb-6 text-center text-gray-700">
+          Welcome Back!
+        </h2>
 
-        {error && <p className="text-red-500 text-center">{error}</p>}
+        {/* Error Message */}
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-        <div className="mb-4">
-          <label className="block mb-1 text-gray-600">Email</label>
+        {/* Email Input */}
+        <div className="relative mb-4">
           <input
             type="email"
             name="email"
             value={email}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="Enter your email"
+            placeholder="Email Address"
+            className="w-full px-4 py-2 border-2 rounded-md border-gray-200 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-300 transition duration-300"
             required
           />
         </div>
 
-        <div className="mb-4">
-          <label className="block mb-1 text-gray-600">Password</label>
+        {/* Password Input */}
+        <div className="relative mb-4">
           <input
             type="password"
             name="password"
             value={password}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="Enter your password"
+            placeholder="Password"
+            className="w-full px-4 py-2 border-2 rounded-md border-gray-200 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-300 transition duration-300"
             required
           />
         </div>
 
+        {/* Login Button */}
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
+          className="w-full py-2 bg-purple-500 text-white font-semibold rounded-md hover:bg-purple-600 transition duration-300"
           disabled={loading}
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? "Logging in..." : "Log In"}
         </button>
+
+        {/* Forgot Password and Register Link */}
+        <div className="mt-4 text-center">
+          <p className="text-gray-500">
+            Don't have an account?{" "}
+            <span
+              className="text-purple-500 hover:underline cursor-pointer"
+              onClick={() => navigate("/register")}
+            >
+              Sign Up
+            </span>
+          </p>
+        </div>
       </form>
     </div>
   );

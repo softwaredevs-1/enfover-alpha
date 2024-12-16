@@ -49,3 +49,7 @@ export const getTopInviters = async () => {
   const response = await axiosInstance.get("/users/top-inviters");
   return response.data;
 };
+export const getAnalytics = async () => {
+  const response = await axiosInstance.get("/analytics");
+  return response.data;
+};

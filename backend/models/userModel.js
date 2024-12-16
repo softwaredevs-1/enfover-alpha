@@ -6,6 +6,14 @@ const userSchema = mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     gender: { type: String, required: true },
+
+    area: {
+           type: String,
+           required: function () {
+           return this.role === "Teacher";
+    },
+   },
+
     role: {
       type: String,
       enum: ["Student", "Teacher", "Admin", "SuperAdmin"],

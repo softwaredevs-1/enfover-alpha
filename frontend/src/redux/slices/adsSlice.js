@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getActiveAds, createAd } from "../../api/adsApi";
+import { getActiveAds, createAd } from "../../api/contentApi.js";
 
 // Async actions
 export const fetchActiveAds = createAsyncThunk("ads/fetchActive", getActiveAds);

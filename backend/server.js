@@ -25,7 +25,14 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable CORS for cross-origin requests
+
+// Enable CORS for cross-origin requests
+app.use(
+  cors({
+    origin: "http://localhost:5000", // Allow requests from frontend running on the same port
+    credentials: true,
+  })
+);
 app.use(express.json()); // Parse JSON requests
 app.use(cookieParser()); // Parse cookies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded requests

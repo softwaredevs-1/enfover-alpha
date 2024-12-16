@@ -4,68 +4,10 @@ import generateTokenAndSetCookies from "../utils/generateToken.js";
 import { nanoid } from "nanoid";
 
 
-// @desc    Register a new user
-// @route   POST /api/users/register
-// @access  Public
-// export const registerUser = async (req, res) => {
-//   const { name, email, password, gender, role, grade, adminRole } = req.body;
 
-//   try {
-//     // Check if user already exists
-//     const userExists = await User.findOne({ email });
-//     if (userExists) {
-//       return res.status(400).json({ message: "User already exists" });
-//     }
-
-//     // Hash the password
-//     const hashedPassword = await bcrypt.hash(password, 10);
-
-//     // Create the user object
-//     const userData = {
-//       name,
-//       email,
-//       password: hashedPassword,
-//       gender,
-//       role: role || "Student", // Default role is Student
-//       adminRole: role === "Admin" ? adminRole : undefined, // Assign admin role if Admin
-//       grade: role === "Student" ? grade : undefined, // Only assign grade for students
-//     };
-
-//     // Set subscriptionStatus only for students
-//     if (role === "Student" || !role) {
-//       userData.subscriptionStatus = "unsubscribed";
-//     }
-
-//     // Save the user to the database
-//     const user = await User.create(userData);
-
-//     // Prepare the response object
-//     const response = {
-//       _id: user.id,
-//       name: user.name,
-//       email: user.email,
-//       gender: user.gender,
-//       role: user.role,
-//       adminRole: user.adminRole,
-//       grade: user.grade,
-//       token: generateTokenAndSetCookies(user.id, res),
-//     };
-
-//     // Include subscriptionStatus only for students
-//     if (user.role === "Student") {
-//       response.subscriptionStatus = user.subscriptionStatus;
-//     }
-
-//     res.status(201).json(response);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-// Register a new user
 // Register a new user
 export const registerUser = async (req, res) => {
-  const { name, email, password, gender, role, grade } = req.body;
+  const { name, email, password, gender, role, area, grade } = req.body;
   const { inviteCode } = req.query; // Extract inviteCode from the query string
 
   try {
@@ -99,19 +41,28 @@ export const registerUser = async (req, res) => {
       inviteCode: nanoid(8), // Generate a unique inviteCode for this user
     };
 
-    // Assign subscriptionStatus for Students
+    // Assign grade and subscriptionStatus for Students only
     if (role === "Student") {
-      userData.grade = grade; // Add grade for students
+      if (!grade) {
+        return res.status(400).json({ message: "Grade is required for students." });
+      }
+      userData.grade = grade;
       userData.subscriptionStatus = "unsubscribed"; // Default subscription status
 
-      // If an inviteCode is provided, handle the inviter logic
+      // Handle inviter logic if an inviteCode is provided
       if (inviteCode) {
         const inviter = await User.findOne({ inviteCode });
-
         if (inviter && inviter.role === "Student") {
           userData.invitedBy = inviter.inviteCode; // Store the inviter's inviteCode in the new user's data
         }
       }
+    }
+
+    if(role === "Teacher"){
+      if(!area) {
+        return res.status(400).json({message: "Area of study is required for Teachers"})
+      }
+      userData.area = area;
     }
 
     // Create the user
@@ -127,6 +78,7 @@ export const registerUser = async (req, res) => {
       gender: user.gender,
       role: user.role,
       grade: user.grade,
+      area: user.area,
       invitedBy: user.invitedBy,
       inviteCode: user.inviteCode, // Include the inviteCode in the response
       subscriptionStatus: user.subscriptionStatus,
@@ -139,14 +91,9 @@ export const registerUser = async (req, res) => {
   }
 };
 
-
-
-
-
 // @desc    Authenticate a user and get token
 // @route   POST /api/users/login
 // @access  Public
-
 
 // Authenticate a user and get token
 export const loginUser = async (req, res) => {

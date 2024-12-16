@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "chapa-nodejs": "^2.0.1",
     "cookie-parse": "^0.4.0",
     "cookie-parser": "^1.4.7",
@@ -10,12 +11,15 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.10.0",
     "mongoose": "^8.8.2",
+    "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "nanoid": "^5.0.9",
     "nodemon": "^3.1.7"
   },
   "scripts": {
-    "server": "nodemon server.js"
+    "start": "node server.js",
+    "frontend": "cd ../frontend && npm run dev",
+    "dev": "concurrently \"npm run start\" \"npm run frontend\""
   },
   "name": "backend",
   "version": "1.0.0",
@@ -31,5 +35,8 @@
   "bugs": {
     "url": "https://github.com/softwaredevs-1/enfover-alpha/issues"
   },
-  "homepage": "https://github.com/softwaredevs-1/enfover-alpha#readme"
+  "homepage": "https://github.com/softwaredevs-1/enfover-alpha#readme",
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
 }
