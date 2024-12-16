@@ -1,0 +1,106 @@
+frontend/
+│
+├── public/                     # Static public assets
+│   ├── index.html              # Main entry point for Vite
+│   └── favicon.ico             # Favicon
+│
+├── src/                        # Main source code
+│   ├── api/                    # API configurations
+│   │   ├── axiosConfig.js      # Axios global configuration
+│   │   ├── userApi.js          # User-related API endpoints
+│   │   ├── courseApi.js        # Course-related API endpoints
+│   │   ├── adsApi.js           # Ads-related API endpoints
+│   │   ├── competitionApi.js   # Competition-related API endpoints
+│   │   ├── newsApi.js          # News-related API endpoints
+│   │   └── paymentApi.js       # Payment-related API endpoints
+│   │
+│   ├── assets/                 # Images, fonts, and static assets
+│   │
+│   ├── components/             # Reusable components
+│   │   ├── Navbar.jsx          # Navigation bar
+│   │   ├── Sidebar.jsx         # Sidebar menu
+│   │   ├── Footer.jsx          # Footer component
+│   │   ├── ProtectedRoute.jsx  # Route protection wrapper
+│   │   ├── Table.jsx           # Generic table component
+│   │   └── Card.jsx            # Card component for display
+│   │  
+│   ├── features/               # Features organized by roles
+│   │   ├── superAdmin/         # SuperAdmin-specific features
+│   │   │   ├── Dashboard.jsx   # SuperAdmin dashboard
+│   │   │   ├── ManageAdmins.jsx
+│   │   │   ├── ManageTeachers.jsx
+│   │   │   ├── ManageStudents.jsx
+│   │   │   ├── Analytics.jsx   # Admin analytics page
+│   │   │   └── TopInviters.jsx
+│   │   │
+│   │   ├── admins/             # Admin-specific features
+│   │   │   ├── competitionAdmin/ 
+│   │   │   │   ├── AddCompetition.jsx
+│   │   │   │   ├── EditCompetition.jsx
+│   │   │   │   └── ManageCompetitions.jsx
+│   │   │   │
+│   │   │   ├── coursesAdmin/
+│   │   │   │   ├── AddCourse.jsx
+│   │   │   │   ├── EditCourse.jsx
+│   │   │   │   └── ManageCourses.jsx
+│   │   │   │
+│   │   │   ├── adsAdmin/
+│   │   │   │   ├── AddAd.jsx
+│   │   │   │   ├── EditAd.jsx
+│   │   │   │   └── ManageAds.jsx
+│   │   │   │
+│   │   │   └── newsAdmin/
+│   │   │       ├── PostNews.jsx
+│   │   │       ├── EditNews.jsx
+│   │   │       └── ManageNews.jsx
+│   │   │
+│   │   ├── teachers/           # Teacher-specific features
+│   │   │   ├── AddCourse.jsx
+│   │   │   ├── EditCourse.jsx
+│   │   │   └── ViewCourses.jsx
+│   │   │
+│   │   └── students/           # Student-specific features
+│   │       ├── Dashboard.jsx
+│   │       ├── ViewCourses.jsx
+│   │       ├── ViewCompetitions.jsx
+│   │       ├── SubmitCompetition.jsx
+│   │       ├── ViewAds.jsx
+│   │       ├── NewsFeed.jsx
+│   │       ├── InviteFriends.jsx
+│   │       └── Profile.jsx
+│   │
+│   ├── hooks/                  # Custom hooks
+│   │   ├── useAuth.js          # Auth-related logic
+│   │   └── useFetch.js         # Fetching reusable logic
+│   │
+│   ├── pages/                  # Pages organized by routes
+│   │   ├── Home.jsx            # Landing page
+│   │   ├── Login.jsx           # Login page
+│   │   ├── Register.jsx        # Registration page
+│   │   ├── SuperAdminDashboard.jsx
+│   │   ├── AdminDashboard.jsx
+│   │   ├── TeacherDashboard.jsx
+│   │   └── StudentDashboard.jsx
+│   │
+│   ├── redux/                  # Redux state management
+│   │   ├── store.js            # Redux store
+│   │   ├── slices/             # Redux slices for each feature
+│   │   │   ├── authSlice.js    # Auth slice
+│   │   │   ├── courseSlice.js  # Courses slice
+│   │   │   ├── adsSlice.js     # Ads slice
+│   │   │   ├── competitionSlice.js
+│   │   │   ├── newsSlice.js
+│   │   │   └── analyticsSlice.js
+│   │
+│   ├── router/                 # React Router setup
+│   │   └── AppRouter.jsx       # Main router configuration
+│   │
+│   ├── styles/                 # Custom styles
+│   │   ├── index.css           # Tailwind CSS entry point
+│   │   └── global.css          # Additional global styles
+│   │
+│   ├── App.jsx                 # Main React component
+│   ├── main.jsx                # Entry point for Vite
+│   └── vite.config.js          # Vite configuration
+│
+└── package.json                # Project dependencies and scripts
