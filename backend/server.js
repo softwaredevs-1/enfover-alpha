@@ -7,72 +7,67 @@ import path from "path";
 import { fileURLToPath } from "url";
 import connectToMongoDB from "./config/db/connectToMongoDB.js";
 
-
 // API Routes
 import userRoutes from "./routes/user.routes.js";
 import newsRoutes from "./routes/news.routes.js";
 import courseRoutes from "./routes/course.routes.js";
 import competitionRoutes from "./routes/competition.routes.js";
-import adsRoutes from "./routes/ads.routes.js"
+import adsRoutes from "./routes/ads.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import { getAdminAnalytics } from "./controllers/getAdminAnalytics.controller.js";
 import { superAdminOnly, adminOnly, protect } from "./middleware/authMiddleware.js";
-
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 
-// Middleware
+// CORS Configuration
+const allowedOrigins = ["http://localhost:5173"]; // Allowed frontend origins
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true, // Allow cookies and credentials
+};
+app.use(cors(corsOptions));
 
-// Enable CORS for cross-origin requests
-app.use(
-  cors({
-    origin: "http://localhost:5000", // Allow requests from frontend running on the same port
-    credentials: true,
-  })
-);
-app.use(express.json()); // Parse JSON requests
-app.use(cookieParser()); // Parse cookies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded requests
-app.use(morgan("dev")); // Log HTTP requests
+// Middleware
+app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan("dev"));
+
+// Root Route
+app.get("/", (req, res) => {
+  res.send("Welcome to the Enfover API");
+});
 
 // Connect to MongoDB
 connectToMongoDB();
 
-
-app.use("/api/users", userRoutes); // User routes for authentication and profile
-app.use("/api/news", newsRoutes); // News section routes
-app.use("/api/courses", courseRoutes); // Courses section routes
-app.use("/api/competitions", competitionRoutes); // Competition routes
-app.use("/api/ads", adsRoutes); // Ads routes
-app.use("/api/payments", paymentRoutes); //payment routes
-
-app.use("/api/analytics",protect, adminOnly, getAdminAnalytics)
-
-
+// Routes
+app.use("/api/users", userRoutes);
+app.use("/api/news", newsRoutes);
+app.use("/api/courses", courseRoutes);
+app.use("/api/competitions", competitionRoutes);
+app.use("/api/ads", adsRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/analytics", protect, adminOnly, getAdminAnalytics);
 
 // Define __dirname manually
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static files from the uploads directory
+// Serve static files (Uploads directory)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-
-// Static Files (For production builds)
-
-
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-// if (process.env.NODE_ENV === "production") {
-//   app.use(express.static(path.join(__dirname, "../frontend/build")));
-//   app.get("*", (req, res) => {
-//     res.sendFile(path.resolve(__dirname, "../frontend", "build", "index.html"));
-//   });
-// }
-
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
@@ -80,8 +75,7 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ message: err.message || "Server Error" });
 });
 
-
-// Start the server
+// Start the Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

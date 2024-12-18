@@ -17,7 +17,7 @@
     "nodemon": "^3.1.7"
   },
   "scripts": {
-    "start": "node server.js",
+    "start": "nodemon server.js",
     "frontend": "cd ../frontend && npm run dev",
     "dev": "concurrently \"npm run start\" \"npm run frontend\""
   },
