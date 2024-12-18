@@ -23,8 +23,8 @@ const userSchema = mongoose.Schema(
       type: String,
       enum: ["competitionAdmin", "coursesAdmin", "adsAdmin", "newsAdmin", "userAdmin"],
       required: function () {
-        return this.role === "Admin";
-      },
+        return this.role === "Admin"; // Only required if role is Admin
+      }
     },
     grade: {
       type: String,

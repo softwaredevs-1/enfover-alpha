@@ -1,32 +1,17 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { loginUser, getUserProfile, registerUser } from "../../api/userApi";
 
+
+// Fetch user and token from localStorage
+const storedToken = localStorage.getItem("token");
+const storedUser = JSON.parse(localStorage.getItem("user"));
+
 // Async actions
-
-// Login action
-export const login = createAsyncThunk("auth/login", async (credentials, thunkAPI) => {
-  try {
-    const response = await loginUser(credentials);
-    localStorage.setItem("token", response.token); // Store token in localStorage
-    return response;
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response?.data?.message || "Login failed");
-  }
-});
-
-// Fetch profile action
-export const fetchProfile = createAsyncThunk("auth/fetchProfile", async (_, thunkAPI) => {
-  try {
-    return await getUserProfile();
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to fetch profile");
-  }
-});
 
 // Register action
 export const register = createAsyncThunk("auth/register", async (userData, thunkAPI) => {
   try {
-    const response = await registerUser(userData);
+    const response = await registerUser(userData); // Ensure payload matches
     localStorage.setItem("token", response.token); // Store token in localStorage
     return response;
   } catch (error) {
@@ -34,12 +19,49 @@ export const register = createAsyncThunk("auth/register", async (userData, thunk
   }
 });
 
+
+// Login action
+export const login = createAsyncThunk("auth/login", async (credentials, thunkAPI) => {
+  try {
+    const response = await loginUser(credentials);
+    localStorage.setItem("token", response.token);
+    localStorage.setItem("user", JSON.stringify(response)); // Persist user data
+    return response;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || "Login failed");
+  }
+});
+
+
+export const logout = createAsyncThunk("auth/logout", async (_, thunkAPI) => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+});
+
+// Fetch profile action
+export const fetchProfile = createAsyncThunk(
+  "auth/fetchProfile",
+  async (_, thunkAPI) => {
+    try {
+      return await getUserProfile();
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch profile"
+      );
+    }
+  }
+);
+
+
+
+
 // Slice
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    user: null,
-    token: localStorage.getItem("token") || null,
+    user: storedUser || null,
+    token: storedToken || null,
     loading: false,
     error: null,
     registerSuccess: false,
@@ -67,7 +89,12 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(logout.fulfilled, (state) => {
+        state.user = null;
+        state.token = null;
+      })
 
+      // Fetch profile cases
       // Fetch profile cases
       .addCase(fetchProfile.pending, (state) => {
         state.loading = true;
@@ -75,7 +102,7 @@ const authSlice = createSlice({
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
+        state.profile = action.payload; // Correctly store fetched profile
       })
       .addCase(fetchProfile.rejected, (state, action) => {
         state.loading = false;
@@ -102,5 +129,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+// export const { logout } = authSlice.actions;
 export default authSlice.reducer;

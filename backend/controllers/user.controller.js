@@ -7,7 +7,7 @@ import { nanoid } from "nanoid";
 
 // Register a new user
 export const registerUser = async (req, res) => {
-  const { name, email, password, gender, role, area, grade } = req.body;
+  const { name, email, password, gender, role, area, grade, adminRole } = req.body;
   const { inviteCode } = req.query; // Extract inviteCode from the query string
 
   try {
@@ -19,20 +19,24 @@ export const registerUser = async (req, res) => {
 
     // Check if role is "SuperAdmin"
     if (role === "SuperAdmin") {
-      return res.status(403).json({ message: "Registering as SuperAdmin is not allowed." });
+      return res
+        .status(403)
+        .json({ message: "Registering as SuperAdmin is not allowed." });
     }
 
     // Check if a SuperAdmin already exists
     const superAdminExists = await User.findOne({ role: "SuperAdmin" });
     if (!superAdminExists && role !== "SuperAdmin") {
-      return res.status(400).json({ message: "A SuperAdmin must already exist in the system." });
+      return res
+        .status(400)
+        .json({ message: "A SuperAdmin must already exist in the system." });
     }
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Build user object
-    const userData = {
+    // Initialize userData with base fields
+    let userData = {
       name,
       email,
       password: hashedPassword,
@@ -41,13 +45,13 @@ export const registerUser = async (req, res) => {
       inviteCode: nanoid(8), // Generate a unique inviteCode for this user
     };
 
-    // Assign grade and subscriptionStatus for Students only
+    // Role-specific validation and field additions
     if (role === "Student") {
       if (!grade) {
         return res.status(400).json({ message: "Grade is required for students." });
       }
       userData.grade = grade;
-      userData.subscriptionStatus = "unsubscribed"; // Default subscription status
+      userData.subscriptionStatus = "unsubscribed";
 
       // Handle inviter logic if an inviteCode is provided
       if (inviteCode) {
@@ -58,16 +62,24 @@ export const registerUser = async (req, res) => {
       }
     }
 
-    if(role === "Teacher"){
-      if(!area) {
-        return res.status(400).json({message: "Area of study is required for Teachers"})
+    if (role === "Teacher") {
+      if (!area) {
+        return res.status(400).json({ message: "Area of study is required for Teachers." });
       }
-      userData.area = area;
+      userData.area = area; // Add 'area' for Teachers
+    }
+
+    if (role === "Admin") {
+      if (!adminRole) {
+        return res.status(400).json({ message: "Admin role is required for Admin users." });
+      }
+      userData.adminRole = adminRole; // Add the admin role
     }
 
     // Create the user
     const user = await User.create(userData);
 
+    // Generate token
     const token = generateTokenAndSetCookies(user.id, res);
 
     // Build response object
@@ -79,17 +91,21 @@ export const registerUser = async (req, res) => {
       role: user.role,
       grade: user.grade,
       area: user.area,
+      adminRole: user.adminRole,
       invitedBy: user.invitedBy,
-      inviteCode: user.inviteCode, // Include the inviteCode in the response
+      inviteCode: user.inviteCode,
       subscriptionStatus: user.subscriptionStatus,
       token,
     };
 
     res.status(201).json(response);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error during registration:", error);
+    res.status(500).json({ message: error.message || "Internal Server Error" });
   }
 };
+
+
 
 // @desc    Authenticate a user and get token
 // @route   POST /api/users/login

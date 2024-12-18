@@ -14,15 +14,24 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    gender: "", // Gender selection
+    gender: "",
     role: "Student", // Default role
-    grade: "",
-    areaOfStudy: "", // For teachers
-    adminRole: "", // For admins
+    grade: "", // For Students
+    areaOfStudy: "", // For Teachers
+    adminRole: "", // For Admins
   });
 
-  const { name, email, password, confirmPassword, gender, role, grade, areaOfStudy, adminRole } =
-    formData;
+  const {
+    name,
+    email,
+    password,
+    confirmPassword,
+    gender,
+    role,
+    grade,
+    areaOfStudy,
+    adminRole,
+  } = formData;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,18 +40,57 @@ const Register = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Validate confirm password
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
 
-    dispatch(register(formData))
+    // Prepare payload dynamically based on role
+    const payload = {
+      name,
+      email,
+      password,
+      gender,
+      role,
+    };
+
+    if (role === "Student") {
+      if (!grade) {
+        alert("Grade is required for Students.");
+        return;
+      }
+      payload.grade = grade; // Map "grade" to the payload
+    }
+
+    if (role === "Teacher") {
+      if (!areaOfStudy) {
+        alert("Area of Study is required for Teachers.");
+        return;
+      }
+      payload.area = areaOfStudy; // Match "area" as expected by the backend
+    }
+
+    if (role === "Admin") {
+      if (!adminRole) {
+        alert("Admin Role is required for Admins.");
+        return;
+      }
+      payload.adminRole = adminRole; // Match "adminRole" as expected by the backend
+    }
+
+    // Submit the payload
+    console.log("Payload Submitted:", payload);
+
+    dispatch(register(payload))
       .unwrap()
       .then(() => {
         alert("Registration successful! Please login.");
         navigate("/login");
       })
-      .catch(() => console.error("Registration failed"));
+      .catch((err) => {
+        console.error("Registration failed:", err);
+      });
   };
 
   return (
@@ -51,172 +99,151 @@ const Register = () => {
         onSubmit={handleSubmit}
         className="bg-white p-8 shadow-2xl rounded-lg w-full max-w-md transition-all duration-500 ease-in-out"
       >
-        <h2 className="text-3xl font-semibold mb-6 text-center text-gray-700">Create an Account</h2>
+        <h2 className="text-3xl font-semibold mb-6 text-center text-gray-700">
+          Create an Account
+        </h2>
 
+        {/* Error Message */}
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         {/* Name */}
-        <div className="relative mb-4">
-          <input
-            type="text"
-            name="name"
-            value={name}
-            onChange={handleChange}
-            placeholder="Name"
-            className="w-full px-4 py-2 rounded-md border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-300 transition duration-300"
-            required
-          />
-        </div>
+        <input
+          type="text"
+          name="name"
+          value={name}
+          onChange={handleChange}
+          placeholder="Name"
+          className="w-full px-4 py-2 mb-4 border rounded-md"
+          required
+        />
 
         {/* Email */}
-        <div className="relative mb-4">
-          <input
-            type="email"
-            name="email"
-            value={email}
-            onChange={handleChange}
-            placeholder="Email"
-            className="w-full px-4 py-2 rounded-md border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-300 transition duration-300"
-            required
-          />
-        </div>
+        <input
+          type="email"
+          name="email"
+          value={email}
+          onChange={handleChange}
+          placeholder="Email"
+          className="w-full px-4 py-2 mb-4 border rounded-md"
+          required
+        />
 
         {/* Password */}
-        <div className="relative mb-4">
-          <input
-            type="password"
-            name="password"
-            value={password}
-            onChange={handleChange}
-            placeholder="Password"
-            className="w-full px-4 py-2 rounded-md border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-300 transition duration-300"
-            required
-          />
-        </div>
+        <input
+          type="password"
+          name="password"
+          value={password}
+          onChange={handleChange}
+          placeholder="Password"
+          className="w-full px-4 py-2 mb-4 border rounded-md"
+          required
+        />
 
         {/* Confirm Password */}
-        <div className="relative mb-4">
-          <input
-            type="password"
-            name="confirmPassword"
-            value={confirmPassword}
-            onChange={handleChange}
-            placeholder="Confirm Password"
-            className="w-full px-4 py-2 rounded-md border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-300 transition duration-300"
-            required
-          />
-        </div>
+        <input
+          type="password"
+          name="confirmPassword"
+          value={confirmPassword}
+          onChange={handleChange}
+          placeholder="Confirm Password"
+          className="w-full px-4 py-2 mb-4 border rounded-md"
+          required
+        />
 
         {/* Gender */}
-        <div className="mb-4">
-          <label className="block mb-2 text-gray-600 font-medium">Gender</label>
-          <div className="flex gap-6">
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="radio"
-                name="gender"
-                value="Male"
-                checked={gender === "Male"}
-                onChange={handleChange}
-                className="mr-2 accent-purple-500"
-              />
-              Male
-            </label>
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="radio"
-                name="gender"
-                value="Female"
-                checked={gender === "Female"}
-                onChange={handleChange}
-                className="mr-2 accent-purple-500"
-              />
-              Female
-            </label>
-          </div>
+        <label className="block mb-2 text-gray-600 font-medium">Gender</label>
+        <div className="flex mb-4">
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="gender"
+              value="Male"
+              checked={gender === "Male"}
+              onChange={handleChange}
+            />
+            <span className="ml-2">Male</span>
+          </label>
+          <label className="flex items-center ml-6">
+            <input
+              type="radio"
+              name="gender"
+              value="Female"
+              checked={gender === "Female"}
+              onChange={handleChange}
+            />
+            <span className="ml-2">Female</span>
+          </label>
         </div>
 
         {/* Role */}
-        <div className="mb-4">
-          <label className="block mb-2 text-gray-600 font-medium">Role</label>
-          <select
-            name="role"
-            value={role}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border-2 border-gray-200 rounded-md focus:ring-2 focus:ring-purple-300 transition duration-300"
-          >
-            <option value="Student">Student</option>
-            <option value="Teacher">Teacher</option>
-            <option value="Admin">Admin</option>
-          </select>
-        </div>
+        <label className="block mb-2 text-gray-600 font-medium">Role</label>
+        <select
+          name="role"
+          value={role}
+          onChange={handleChange}
+          className="w-full px-4 py-2 mb-4 border rounded-md"
+        >
+          <option value="Student">Student</option>
+          <option value="Teacher">Teacher</option>
+          <option value="Admin">Admin</option>
+        </select>
 
-        {/* Grade for Students */}
+        {/* Conditional Fields */}
         {role === "Student" && (
-          <div className="mb-4">
-            <label className="block mb-2 text-gray-600 font-medium">Grade</label>
-            <input
-              type="text"
-              name="grade"
-              value={grade}
-              onChange={handleChange}
-              placeholder="Enter Grade"
-              className="w-full px-4 py-2 rounded-md border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-300 transition duration-300"
-              required
-            />
-          </div>
+          <input
+            type="text"
+            name="grade"
+            value={grade}
+            onChange={handleChange}
+            placeholder="Grade"
+            className="w-full px-4 py-2 mb-4 border rounded-md"
+            required
+          />
         )}
 
-        {/* Area of Study for Teachers */}
         {role === "Teacher" && (
-          <div className="mb-4">
-            <label className="block mb-2 text-gray-600 font-medium">Area of Study</label>
-            <input
-              type="text"
-              name="areaOfStudy"
-              value={areaOfStudy}
-              onChange={handleChange}
-              placeholder="Enter Area of Study"
-              className="w-full px-4 py-2 rounded-md border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-300 transition duration-300"
-              required
-            />
-          </div>
+          <input
+            type="text"
+            name="areaOfStudy"
+            value={areaOfStudy}
+            onChange={handleChange}
+            placeholder="Area of Study"
+            className="w-full px-4 py-2 mb-4 border rounded-md"
+            required
+          />
         )}
 
-        {/* Admin Role for Admins */}
         {role === "Admin" && (
-          <div className="mb-4">
-            <label className="block mb-2 text-gray-600 font-medium">Admin Role</label>
-            <select
-              name="adminRole"
-              value={adminRole}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border-2 border-gray-200 rounded-md focus:ring-2 focus:ring-purple-300 transition duration-300"
-              required
-            >
-              <option value="userAdmin">User Admin</option>
-              <option value="newsAdmin">News Admin</option>
-              <option value="adsAdmin">Ads Admin</option>
-              <option value="coursesAdmin">Courses Admin</option>
-              <option value="competitionAdmin">Competition Admin</option>
-            </select>
-          </div>
+          <select
+            name="adminRole"
+            value={adminRole}
+            onChange={handleChange}
+            className="w-full px-4 py-2 mb-4 border rounded-md"
+            required
+          >
+            <option value="">Select Admin Role</option>
+            <option value="userAdmin">User Admin</option>
+            <option value="newsAdmin">News Admin</option>
+            <option value="adsAdmin">Ads Admin</option>
+            <option value="coursesAdmin">Courses Admin</option>
+            <option value="competitionAdmin">Competition Admin</option>
+          </select>
         )}
 
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full py-2 bg-purple-500 text-white font-semibold rounded-md hover:bg-purple-600 transition duration-300"
+          className="w-full py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600"
           disabled={loading}
         >
           {loading ? "Registering..." : "Sign Up"}
         </button>
 
-        {/* Login Link */}
+        {/* Login Redirect */}
         <p className="mt-4 text-center text-gray-500">
           Already have an account?{" "}
           <span
-            className="text-purple-500 hover:underline cursor-pointer"
+            className="text-purple-500 cursor-pointer hover:underline"
             onClick={() => navigate("/login")}
           >
             Log In

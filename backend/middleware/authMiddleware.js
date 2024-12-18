@@ -273,4 +273,3 @@ export const newsAdminOnly = (req, res, next) => {
     res.status(403).json({ message: "Access denied. News Admins only." });
   }
 };
-

@@ -22,7 +22,6 @@ import {
   generateInviteLink,
   getInviterPoints,
   getTopInviters,
-
 } from "../controllers/user.controller.js";
 import {
   adminOnly,

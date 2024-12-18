@@ -20,21 +20,58 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    dispatch(login(formData))
+  
+    // Prepare the payload with only email and password
+    const payload = {
+      email: formData.email,
+      password: formData.password,
+    };
+  
+    console.log("Payload Submitted:", payload); // Debug the payload before dispatching
+  
+    dispatch(login(payload))
       .unwrap()
       .then((data) => {
-        // Navigate based on user role
-        const { role } = data;
-        if (role === "SuperAdmin") navigate("/super-admin/dashboard");
-        else if (role === "Admin") navigate("/admin/dashboard");
-        else if (role === "Teacher") navigate("/teacher/dashboard");
-        else navigate("/student/dashboard");
+        console.log("Login successful, response:", data); // Log the full backend response
+  
+        // Ensure the backend response has a role
+        if (data?.role) {
+          const { role } = data;
+  
+          // Navigate based on the user's role
+          switch (role) {
+            case "SuperAdmin":
+              navigate("/super-admin/dashboard");
+              break;
+            case "Admin":
+              navigate("/admin/dashboard");
+              break;
+            case "Teacher":
+              navigate("/teacher/dashboard");
+              break;
+            case "Student":
+            default:
+              navigate("/student/dashboard");
+              break;
+          }
+        } else {
+          console.error("Role not found in response. Check backend response structure.");
+          alert("Something went wrong. Please try again.");
+        }
       })
-      .catch(() => {
-        console.error("Login failed");
+      .catch((err) => {
+        console.error("Login failed:", err);
+  
+        // Graceful error handling with clear user feedback
+        const errorMessage =
+          typeof err === "string"
+            ? err
+            : "Login failed. Please check your credentials and try again.";
+        alert(errorMessage);
       });
   };
+  
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
